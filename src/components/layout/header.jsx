@@ -47,7 +47,7 @@ import { NotificationCard } from "../ui/NotificationCard";
             <input
               type="text"
               placeholder="Rechercher..."
-              className="w-full border border-[1px] border-gray-500 rounded p-2  text-sm focus:outline-none focus:ring focus:shadow-lg focus:border-blue-300 
+              className="w-full  border-[1px] border-gray-500 rounded p-2  text-sm focus:outline-none focus:ring focus:shadow-lg focus:border-blue-300 
               bg-indigo-900 "
             />
             <Search className="w-4 h-4 text-gray-400 absolute right-2  transform -translate-y-6 " />
@@ -69,20 +69,6 @@ import { NotificationCard } from "../ui/NotificationCard";
             </button>
             {notifOpen && (
               <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg overflow-hidden z-50">
-                
-                {/* <ul className="max-h-48 overflow-y-auto">
-                  {notifications.map((n) => (
-                    <li
-                      key={n.id}
-                      className="flex justify-between px-4 py-2 hover:bg-gray-50 text-sm text-gray-700"
-                    >
-                      <span className="truncate">{n.title}</span>
-                      <time className="flex-shrink-0 text-xs text-gray-400">
-                        {n.time}
-                      </time>
-                    </li>
-                  ))}
-                </ul> */}
                 <NotificationCard  notifications={notifications} numberNot={notifications.length}/>
               </div>
             )}

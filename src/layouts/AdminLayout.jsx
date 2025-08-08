@@ -42,9 +42,7 @@ import { getNotification } from "../services/ServicesAdmin/ServicesDashbord";
       ]},
     { name: 'Orders & Transactions',     icon: Users,hasSubmenu: true, badge: true, children:[
       {name:"All Orders", link:"/admin/all-orders"},
-      {name:"Pending Orders", link:"/admin/pending-orders"},
-      {name:"Completed Orders", link:"/admin/completed-orders"},
-      {name:"Cancelled Orders", link:"/admin/cancelled-orders"},
+      {name:"All Transactions",link:"/admin/all-transactions"}
     ] },
     { name: 'Deposits',icon: Wallet,    hasSubmenu: true, badge: true,
       children:[
@@ -62,8 +60,6 @@ import { getNotification } from "../services/ServicesAdmin/ServicesDashbord";
     ] },
     { name: 'Support & communications',   icon: Mail, hasSubmenu: true,children:[
       {name: "Pending Tickets", link:"/admin/pending-tickets"},
-      {name: "Closed Tickets", link:"/admin/closed-tickets"},
-      {name:"Answered Tickets", link:"/admin/answered-tickets"},
       {name:"All Tickets", link:"/admin/all-tickets"},
     ]},
     { name: 'Report',icon: BarChart3,hasSubmenu: true,link:"report",children:[
@@ -78,8 +74,7 @@ import { getNotification } from "../services/ServicesAdmin/ServicesDashbord";
       {name:"Promotions", link:"/admin/promotions"},
     ]},
     { name: 'Subscribers',      icon: UserCheck ,link:"subscribers"},
-
-    { name: 'System Setting',   icon: Settings ,link:"setting"},
+    { name: 'System Setting',   icon: Settings ,link:"/admin/setting"},
   ];
 export default function AdminLayout(){
   const [notifications,setNotificaion]=useState([])
@@ -87,7 +82,7 @@ export default function AdminLayout(){
     async function fetchData(){
       const notifs=await getNotification()
       setNotificaion(notifs)
-      console.log(notifs)
+     
     }
     fetchData()
   },[])
@@ -101,7 +96,7 @@ export default function AdminLayout(){
           {/* Header */}
           <Header
             notifications={notifications}
-            numberNotification={notifications.length}
+            numberNotification={notifications?.length}
           />
           <main className="-1  p-6 min-h-screen overflow-y-auto ">
             <Outlet/>
@@ -109,6 +104,5 @@ export default function AdminLayout(){
         </div>
       </div>     
     </div>
-   
     </>
 }

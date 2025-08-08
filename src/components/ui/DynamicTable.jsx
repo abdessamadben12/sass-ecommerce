@@ -91,7 +91,7 @@ export default function DynamicTable({
             </tr>
           ))}
 
-          {data.length === 0 && (
+          {data?.length === 0 && (
             <tr>
               <td colSpan={columns.length + (actions ? 1 : 0)} className="py-6 text-center text-gray-500">
                 {emptyMessage}

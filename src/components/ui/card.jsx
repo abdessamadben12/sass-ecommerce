@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 export default function Card({title, value, icon, borderColor, bgColor,link,border,bgCard}) {
     return (
      <Link href={link} >
-    <div className={`${bgCard ? bgCard :" bg-white"}    p-6 shadow-sm ${border} ${borderColor} hover:shadow-md transition-shadow cursor-pointer`}>
+    <div className={`${bgCard ? bgCard :" bg-white"} p-6 shadow-sm ${border} ${borderColor} hover:shadow-md transition-shadow cursor-pointer`}>
      <div className="flex justify-between items-center ">
      <div className="flex items-center gap-4">
      <div className={`p-3 rounded-lg ${bgColor} `}>

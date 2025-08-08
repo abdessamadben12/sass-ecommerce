@@ -2,58 +2,58 @@ import React, { useEffect, useState } from 'react'
 import DynamicTable from '../../../components/ui/DynamicTable';
 import InputSearch from '../../../components/ui/InputSearch';
 import DateRangePicker from '../../../components/ui/DateRangePicker';
-import { DepositService } from '../../../services/ServicesAdmin/DepositService';
 import NotifyError from '../../../components/ui/NotifyError';
 import Pagination from '../../../components/ui/pagination';
 import Loading from '../../../components/ui/loading';
-const DepositColumns = [
+import { getWithdrawals } from '../../../services/ServicesAdmin/WithdrawalsServices';
+const WithdrawalsColumns = [
   { key: "gateway", label: "Gateway | Transaction" ,
-    render:(deposit) => deposit.payment_method ?? "--"
+    render:(withdrawal) => withdrawal.payment_method ?? "--"
   },
     {
     key:"user",
     label:"name",
-    render:deposit=>deposit.user.name
+    render:withdrawal=>withdrawal.user.name
   },
   {
     key: "trx",
     label: "Trx",
-    render: (deposit) => `${deposit.trx}` ?? "--",
+    render: (withdrawal) => `${withdrawal.trx}` ?? "--",
   },
   {
     key: "created_at",
     label: "Initiated",
-    render: (deposit) => deposit.created_at.split("T")[0] ?? "--",
+    render: (withdrawal) => withdrawal.created_at.split("T")[0] ?? "--",
   },
 
    {
     key:"Conversion",
     label:" Conversion",
-    render: (deposit) => deposit.notes  ?? "--",
+    render: (withdrawal) => withdrawal.notes  ?? "--",
   },
   {
     key: "amount",
     label: "Amount",
-    render: (deposit) => `${deposit.amount} $`,
+    render: (withdrawal) => `${withdrawal.amount} $`,
   },
 
   {
     key: "status",
     label: "Status",
-    render: (deposit) =>
-      deposit.status === "confirmed" ? (
-        <span className="text-green-600 bg-green-100 px-2 py-1 font-semibold rounded-full ">{deposit.status}</span>
-      ) :deposit.status === "pending" ? (
-        <span className="text-yellow-600 bg-yellow-100 px-2 py-1 font-semibold rounded-full ">{deposit.status}</span>
+    render: (withdrawal) =>
+      withdrawal.status === "confirmed" ? (
+        <span className="text-green-600 bg-green-100 px-2 py-1 font-semibold rounded-full ">{withdrawal.status}</span>
+      ) : withdrawal.status === "pending" ? (
+        <span className="text-yellow-600 bg-yellow-100 px-2 py-1 font-semibold rounded-full ">{withdrawal.status}</span>
       ) : (
-        <span className="text-red-600 bg-red-100  font-semibold px-2 py-1 rounded-full">{deposit.status}</span>
-      ), 
+        <span className="text-red-600 bg-red-100  font-semibold px-2 py-1 rounded-full">{withdrawal.status}</span>
+      ),
   },
 ];
-export default function AllDeposit() {
+export default function AllWithdrawals() {
   const [inputSerch, setInputSearch] = useState("");
   const [selectedPeriod, setSelectedPeriod] = useState(null);
-   const[dataDeposit,setDataDeposit]=useState([])
+   const[dataWithdrawals ,setDataWithdrawals]=useState([])
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(5);
   const [totalPages, setTotalPages] = useState(1);
@@ -69,13 +69,13 @@ export default function AllDeposit() {
     // Call the DepositService with the search input and selected period
     try {
       setLoading(true);
-      const data = await DepositService(null, inputSerch, selectedPeriod?.start, selectedPeriod?.end, currentPage, perPage, setError);
-      setDataDeposit(data.data);
+      const data = await getWithdrawals(null, inputSerch, selectedPeriod?.start, selectedPeriod?.end, currentPage, perPage, setError);
+      setDataWithdrawals(data.data);
       setTotalPages(data.last_page);
       setCurrentPage(data.current_page);
       setPerPage(data.per_page);
     } catch (error) {
-      console.error("Error fetching deposits:", error);
+      console.error("Error fetching withdrawals:", error);
     } finally {
       setLoading(false);
     }
@@ -86,8 +86,8 @@ export default function AllDeposit() {
   
   return (
     loading ? <Loading/> : <div className='min-h-screen p-6'>
-        <h1 className='text-2xl font-semibold text-gray-700'>All Deposit</h1>
-        <p className='text-gray-500 text-sm'>Manage all deposit requests from users.</p>
+        <h1 className='text-2xl font-semibold text-gray-700'>All Withdrawals</h1>
+        <p className='text-gray-500 text-sm'>Manage all withdrawal requests from users.</p>
         {/* Add your deposit management components here */} 
                {/* ajouter un header de recherche avec date or trx */}
                 <div className='w-full flex  items-center gap-4 mb-6'>
@@ -100,10 +100,10 @@ export default function AllDeposit() {
                      searchCallback={handleSearch} />     
                 </div>
             <DynamicTable
-              data={dataDeposit}
-              columns={DepositColumns}
+              data={dataWithdrawals}
+              columns={WithdrawalsColumns}
               actions={{
-                viewPath: "/admin/detaill-deposit",
+                viewPath: "/admin/detaill-withdrawal",
               }}
             />
                     <NotifyError message={error} onClose={()=>setError(null)}   isVisible={error !== null && true}/>

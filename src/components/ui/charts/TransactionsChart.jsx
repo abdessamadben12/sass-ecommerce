@@ -9,7 +9,7 @@ import {
   Legend,
   Tooltip,
 } from 'recharts';
-import Calendarie from '../Calendries'; // تقويمك
+import Calendarie from '../DateRangePicker'; // تقويمك
 import { getChartTransaction } from '../../../services/ServicesAdmin/ServicesDashbord';
 
 const TransactionsReport = () => {

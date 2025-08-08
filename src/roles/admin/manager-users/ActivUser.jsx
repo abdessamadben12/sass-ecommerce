@@ -1,6 +1,6 @@
 import  { useMemo, useEffect, useState } from 'react'
 import DataTable from '../../../components/ui/DataTable'
-import {  Search } from 'lucide-react';
+import {   Printer } from 'lucide-react';
 import { deleteUsers, getActiveUser } from '../../../services/ServicesAdmin/userServices';
 import NotifyError from '../../../components/ui/NotifyError';
 import Pagination from '../../../components/ui/pagination';
@@ -30,7 +30,6 @@ export default function ActiveUser() {
          }
         fetchData()
     },[currentPage,perPage,role, inputSerch])
-    console.log(ActiveUsers)
     function handleRole(role){
         setRole(role)
     }
@@ -53,7 +52,18 @@ export default function ActiveUser() {
     return (
     <div className='relative min-h-screen'>
     <div>
-        <h1 className='font-bold text-black text-2xl capitalize'>user managment</h1>
+<div className='flex justify-between items-center'>        
+  <h1 className='font-bold text-black text-2xl capitalize'>Users Management</h1>
+  <button 
+  onClick={()=>window.open("http://localhost:8000/api/admin/templates/pdf-user","_blank")}
+  className='border-blue-700 border text-blue-700 transition-colors duration-500
+   hover:bg-blue-700 hover:text-white px-4 py-2 rounded-md flex items-center gap-2'
+   >
+    <Printer /> Export Pdf Users</button>
+
+
+
+</div>
         <HeaderTable menu={<Menu handleRole={handleRole} role={role} /> } setInputSearch={setInputSearch} inputSerch={inputSerch}/>
      </div>
     {

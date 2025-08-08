@@ -21,7 +21,7 @@ function buildMatrix(year, month){
   return m;
 }
 const fmt = d => d.toLocaleDateString("en-US", { month:"long", day:"2-digit", year:"numeric" });
-export default function CalendarRange({ initialMonth = new Date(), onApply }){
+export default function   CalendarRange({ initialMonth = new Date(), onApply }){
   const [cursor, setCursor] = useState(new Date(initialMonth.getFullYear(), initialMonth.getMonth()));
   const [{start, end}, setRange] = useState({ start:null, end:null });
   const [open, setOpen] = useState(false);

@@ -64,7 +64,7 @@ export default function BalanceModal({ onClose, onAction, title }) {
           <h2 className="text-lg font-semibold text-gray-700">{title}</h2>
           <button onClick={closeWithAnimation} className="text-gray-600 text-xl">
             &times;
-          </button>
+          </button> 
         </div>
 
         {/* Form */}

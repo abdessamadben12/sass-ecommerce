@@ -40,7 +40,7 @@ export default function UserEdit({user,onSubmit,loading}) {
       <div className="max-w-4xl mx-auto">
         <div className="bg-white rounded-2xl shadow-xl p-8 backdrop-blur-lg border border-white/20">
           <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Information of test capita
+            Information of{" "+user?.name}
           </h1>
       
       <div className="space-y-8">
