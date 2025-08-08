@@ -11,11 +11,35 @@ return new class extends Migration
      */
     public function up(): void
     {
+         Schema::disableForeignKeyConstraints();
         Schema::create('product_settings', function (Blueprint $table) {
             $table->id();
-            $table->decimal("commission_platform", 10, 2)->default(0);
+            $table->foreignId('category_id')->constrained('categories')->onDelete('cascade');
+            $table->foreignId('format_id')->constrained('product_formats')->onDelete('cascade');
 
-            $table->timestamps();
+            // Règles techniques
+            $table->integer('min_width')->nullable();
+            $table->integer('min_height')->nullable();
+            $table->unsignedBigInteger('min_file_size')->nullable();
+            $table->unsignedBigInteger('max_file_size')->nullable();
+            $table->integer('required_dpi')->nullable();
+
+            // Règles de contenu
+            $table->integer('requires_description_min_length')->default(100);
+            $table->integer('requires_tags_min_count')->default(3);
+            $table->integer('requires_preview_images_min')->default(1);
+
+            // Validation automatique
+            $table->boolean('auto_virus_scan')->default(true);
+            $table->boolean('auto_duplicate_check')->default(true);
+            $table->boolean('auto_quality_assessment')->default(true);
+
+            // Validation manuelle
+            $table->boolean('requires_manual_review')->default(true);
+
+            $table->timestamp('created_at')->useCurrent();
+
+            $table->unique(['category_id', 'format_id'], 'unique_category_format');
         });
     }
 
@@ -24,6 +48,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+         Schema::disableForeignKeyConstraints();
         Schema::dropIfExists('product_settings');
     }
 };

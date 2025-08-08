@@ -11,18 +11,44 @@ return new class extends Migration
      */
     public function up(): void
     {
+         Schema::disableForeignKeyConstraints();
         Schema::create('products', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('shop_id')->constrained()->onDelete('cascade');
-            $table->foreignId('category_id')->constrained()->onDelete('cascade');
-            $table->string('name');
-            $table->text('description');
-            $table->decimal('price', 10, 2);
-            $table->integer('quantity');
-            $table->string('image')->nullable();
-            $table->enum('status', ['approved', 'draft' , "rejected", "pending", "suspended"])->default('approved');
-            $table->boolean("require_validation")->default(false);
-            $table->timestamps();
+          $table->id();
+
+// Références
+$table->foreignId('shop_id')->constrained('shops')->onDelete('cascade');
+$table->foreignId('category_id')->constrained('categories');
+$table->foreignId('product_setting_id')->constrained('product_settings');
+$table->foreignId('license_id')->constrained('licenses');
+
+// Informations produit
+$table->string('title');
+$table->string('slug')->unique();
+$table->text('description')->nullable();
+$table->json('tags')->nullable();
+
+// Prix
+$table->decimal('base_price', 10, 2);
+$table->decimal('minimum_price', 10, 2)->default(0.00);
+
+// Fichiers
+$table->string('main_file_path', 500);
+$table->unsignedBigInteger('main_file_size')->nullable();
+$table->string('file_hash', 64)->nullable();
+
+// Preview
+$table->json('preview_images')->nullable();
+$table->string('thumbnail_path')->nullable();
+
+// Status modération
+$table->enum('status', ['draft', 'pending', 'approved', 'rejected',"supended"])->default('draft');
+// SEO (optionnel mais utile)
+$table->string('meta_title')->nullable();
+$table->text('meta_description')->nullable();
+// Timestamps
+$table->timestamp('published_at')->nullable();
+$table->timestamps();
+
         });
     }
     /**
@@ -30,6 +56,8 @@ return new class extends Migration
      */
     public function down(): void
     {
+         Schema::disableForeignKeyConstraints();
+
         Schema::dropIfExists('products');
     }
 };

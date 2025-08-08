@@ -11,12 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
+         Schema::disableForeignKeyConstraints();
         Schema::create('reviews', function (Blueprint $table) {
             $table->id();
             $table->boolean('is_reported')->default(false);
             $table->text('report_reason')->nullable();
             $table->enum('moderation_status', ['pending', 'reviewed', 'removed'])->default('pending');
             $table->timestamps();
+            
         });
     }
 
@@ -25,6 +27,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+         Schema::disableForeignKeyConstraints();
         Schema::dropIfExists('reviews');
     }
 };

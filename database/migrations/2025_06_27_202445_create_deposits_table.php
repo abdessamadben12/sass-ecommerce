@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+         Schema::disableForeignKeyConstraints();
         Schema::create('deposits', function (Blueprint $table) {
         $table->id();
         $table->foreignId('user_id')->constrained()->onDelete('cascade');
@@ -22,6 +23,7 @@ return new class extends Migration
         $table->text('notes')->nullable(); // notes internes ou justificatifs
         $table->timestamps();
         });
+
     }
 
     /**
@@ -29,6 +31,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+         Schema::disableForeignKeyConstraints();
         Schema::dropIfExists('deposits');
     }
 };

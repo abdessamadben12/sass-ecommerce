@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use App\Models\Deposit;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -10,13 +11,20 @@ class DepositController extends Controller
 {
     public function getDeposits(Request $request)
     {
-        $status= $request->input('status', 'all');
-        $startDate = $request->input('start_date', null);
-        $endDate = $request->input('end_date', null);
-        $userId = $request->input('user_id', null);
+        $status= $request->status;
+        $startDate =$request->input('start_date')!==null ? Carbon::parse($request->input('start_date'))->startOfDay() : null;
+        $endDate = $request->input('end_date')!==null ? Carbon::parse($request->input('end_date'))->endOfDay() : null;
+        $trxOrName = $request->input('search', null);
+        $perPage = $request->input('per_page', 10);
         $query = Deposit::query();
-        if ($request->has('user_id') && $userId !== null) {
-            $query->where('user_id', $userId);
+        if ($trxOrName !== null ) {
+            $query->whereHas('user', function ($q) use ($trxOrName) {
+                $q->where('name', 'like', '%' . $trxOrName . '%');
+            })->orWhere('transaction_id', 'like', '%' . $trxOrName . '%'); 
+          $query->whereHas('user', function ($q) use ($trxOrName) {
+                $q->where('name', 'like', '%' . $trxOrName . '%');
+            })->orWhere('transaction_id', 'like', '%' . $trxOrName . '%');
+        
         }
         if($startDate !== null && $endDate !== null) {
             $query->whereBetween('created_at', [$startDate, $endDate]);
@@ -32,8 +40,9 @@ class DepositController extends Controller
         } elseif ($status === 'rejected') {
             $query->where('status', 'rejected');
         }
-        $depost= $query->with(['user', 'transaction'])->get();
-        return response()->json($depost);
+        $deposit= $query->with(['user',"transactions"])->paginate($perPage);
+
+        return response()->json($deposit, 200);
     }
     
 }

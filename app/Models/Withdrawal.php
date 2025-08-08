@@ -16,9 +16,8 @@ class Withdrawal extends Model
     {
         return $this->belongsTo(User::class);
     }
-    public function transaction()
-    {
-        return $this->hasOne(Transaction::class);
-    }
-    
+       public function transactions()
+{
+      return $this->morphOne(Transaction::class, 'sourceable');
+}
 }

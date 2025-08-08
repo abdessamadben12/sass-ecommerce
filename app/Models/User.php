@@ -92,14 +92,7 @@ class User extends Authenticatable
     return $this->hasMany(Transaction::class);
  }
  public function profit(){
-   return $this->hasManyThrough(
-        Profit::class,
-        Shop::class,
-        "user_id",
-        "shop_id",
-        "id",
-        "id"
-    );
+   return $this->hasMany(Profit::class);
  }
  public function details(){
     return $this->hasOne(User_detaill::class);

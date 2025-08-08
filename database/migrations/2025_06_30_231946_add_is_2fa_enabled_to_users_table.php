@@ -11,8 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
+         Schema::disableForeignKeyConstraints();
         Schema::table('users', function (Blueprint $table) {
-             $table->boolean('is_2fa_enabled')->default(false);
+             
         });
     }
 
@@ -21,6 +22,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+        
         Schema::table('users', function (Blueprint $table) {
             //
         });

@@ -30,6 +30,6 @@ class Deposit extends Model
     }
     public function transactions()
 {
-    return $this->morphMany(Transaction::class, 'sourceable');
+      return $this->morphOne(Transaction::class, 'sourceable');
 }
 }

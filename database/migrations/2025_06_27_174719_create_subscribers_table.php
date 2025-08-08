@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+         Schema::disableForeignKeyConstraints();
         Schema::create('subscribers', function (Blueprint $table) {
             $table->id();
             $table->string('email')->unique();
@@ -23,6 +24,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+         Schema::disableForeignKeyConstraints();
         Schema::dropIfExists('subscribers');
     }
 };

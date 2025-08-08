@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+         Schema::disableForeignKeyConstraints();
         Schema::create('admin_logs', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
@@ -22,6 +23,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+         Schema::disableForeignKeyConstraints();
         Schema::dropIfExists('admin_logs');
     }
 };

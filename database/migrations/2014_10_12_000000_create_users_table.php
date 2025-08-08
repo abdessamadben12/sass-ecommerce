@@ -15,9 +15,12 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
+            $table->string('avatar')->nullable();
             $table->enum('role', ['admin', 'seller', 'buyer']);
             $table->enum('status', ['active',"pending", "inactive"])->default('pending');
             $table->timestamp('email_verified_at')->nullable();
+            $table->date('last_login_at')->nullable();
+            $table->boolean('is_2fa_enabled')->default(false);
             $table->string('password');
             $table->rememberToken();
             $table->timestamps();

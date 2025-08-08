@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+         Schema::disableForeignKeyConstraints();
         Schema::create('alerts', function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_id')->nullable()->constrained()->onDelete('cascade');
@@ -27,6 +28,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+         Schema::disableForeignKeyConstraints();
         Schema::dropIfExists('alerts');
     }
 };

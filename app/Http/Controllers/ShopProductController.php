@@ -8,6 +8,9 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ShopResource;
 use App\Http\Resources\ProductResource;
+use App\Models\Profit;
+use App\Models\Order;
+use Illuminate\Support\Facades\Storage;
 
 class ShopProductController extends Controller
 {
@@ -29,21 +32,11 @@ class ShopProductController extends Controller
 
     public function getShop(Request $request){
         $id = $request->id;
-        $shop=Shop::with(["user.details","profits","products.orderItems.order"])->withSum("profits","total_amount")->withCount("products")->whereHas("products", function ($q) {
-            // counter les order
-        })->find($id);
-         $ordersIds = collect($shop->products)
-        ->flatMap(function ($product) {
-            return $product->orderItems->pluck('order.id');
-        })
-        ->unique()
-        ->filter()
-        ->values();
-        $totalOrders = $ordersIds->count();
-        $totalProfits = $shop->profits_sum_total_amount ?? 0;
-        $shop->total_orders = $totalOrders;
-        $shop->total_profits = $totalProfits;
-        return response()->json(new ShopResource($shop), 200);
+            $shop=Shop::with(["user","products.orders"])
+            ->find($id);
+            $url=Storage::disk('spaces_2')->url($shop->user->avatar);
+            $shop->user->avatar=$url;
+        return response()->json($shop, 200);
     }
     public function getProducts(Request $request){
             $perPage = $request->input('per_page', 10);
@@ -68,7 +61,19 @@ class ShopProductController extends Controller
             // $products=new ProductResource($result);
             return response()->json($result, 200);
     }
-        }
 
-
-
+    public function getStatistiqueShop(Request $request){
+        $id = $request->id;
+        $totalProducts = Product::where('shop_id', $id)->count();
+        $totalProfits = Profit::where('shop_id', $id)->where("is_paid",false)->sum('total_amount');
+        $productactive = Product::where('shop_id', $id)->where('status', 'active')->count();
+        $totalOredrs = Product::where('shop_id', $id)->withCount('orderItems')->get()->sum('order_items_count');
+        return response()->json([
+            'total_products' => $totalProducts,
+            'total_profits' => $totalProfits,
+            'product_active' => $productactive,
+            'total_orders' => $totalOredrs
+        ], 200);
+      
+    }
+}

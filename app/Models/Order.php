@@ -20,12 +20,9 @@ class Order extends Model
     }
     public function products()
     {
-        return $this->belongsToMany(Product::class)->withPivot('quantity', 'price');
+        return $this->belongsToMany(Product::class,"order_items","order_id","product_id")->withPivot('quantity', 'price');
     }
-    public function items()
-    {
-        return $this->hasMany(Order_item::class);
-    } 
+  
     public function transactions()
 {
     return $this->morphMany(Transaction::class, 'sourceable');

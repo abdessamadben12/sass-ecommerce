@@ -44,18 +44,24 @@ return [
             'throw' => false,
         ],
 
-        's3' => [
+        'spaces_1' => [
             'driver' => 's3',
-            'key' => env('AWS_ACCESS_KEY_ID'),
-            'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            'key' => env('DO_SPACES_KEY'),
+            'secret' => env('DO_SPACES_SECRET'),
             'region' => env('AWS_DEFAULT_REGION'),
-            'bucket' => env('AWS_BUCKET'),
-            'url' => env('AWS_URL'),
-            'endpoint' => env('AWS_ENDPOINT'),
-            'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
-            'throw' => false,
+            'bucket' => env('DO_SPACES_BUCKET'),
+            'endpoint' => env('DO_SPACES_ENDPOINT'),
+             'visibility' => 'private',
         ],
-
+    'spaces_2' => [
+    'driver' => 's3',
+    'key' => env('DO_SPACES_KEY_2'),
+    'secret' => env('DO_SPACES_SECRET_2'),
+    'region' => env('DO_SPACES_REGION_2'),
+    'bucket' => env('DO_SPACES_BUCKET_2'),
+    'endpoint' => env('DO_SPACES_ENDPOINT_2'),
+    'visibility' => 'public',
+],
     ],
 
     /*
