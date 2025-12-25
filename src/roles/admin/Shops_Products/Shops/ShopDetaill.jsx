@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Star, Package, DollarSign, TrendingUp, Calendar, CheckCircle, XCircle, AlertCircle, Eye } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getShop } from '../../../../services/ServicesAdmin/ShopProductsServices';
-import DataTable from '../../../../components/ui/DataTable';
+import { getShop, putStatusShop } from '../../../../services/ServicesAdmin/ShopProductsServices';
+import { NotifySuccess } from '../../../../components/ui/NotifySucces';
+import NotifyError from '../../../../components/ui/NotifyError';
+import Loading from '../../../../components/ui/loading';
 
 
 function getStatus(status) {
@@ -72,29 +74,7 @@ function getStatus(status) {
       );
   }
 }
-const columnsProduit=[
-  {
-    key:"title",
-    label:"title",
-    render:(item)=><div>{item.title}</div>
-  },
-    {
-      key:"base_price",
-      label:"base_price",
-      render:(item)=><div>{item.base_price}</div>
-    },
-{
-  key:"size",
-  label:"size",
-  render:(item)=><div>{item.main_file_size}</div>
-},
-    {
-      key:"status",
-      label:"Status",
-      render:(item)=><div>{getStatus(item.status)}</div>
-    }
-  
-]
+
 const ShopDetail = () => {
   // Données d'exemple si aucune donnée n'est fournie
 
@@ -102,15 +82,17 @@ const ShopDetail = () => {
 
   const [shop,setShop]=useState()
   const [loading,setLoading]=useState(false)
-  const [error,setError]=useState(null)
-  const [success,setSuccess]=useState(null)
+  const [error,setError]=useState({etats:false,message:''})
+  const [success,setSuccess]=useState({etats:false,message:''})
   const {id}=useParams()
 
 
   useEffect(()=>{
     const fetchShop=async()=>{
+      setLoading(true)
       const data=await getShop(id,setError)
       setShop(data)
+      setLoading(false)
     }
     fetchShop()
   },[])
@@ -197,9 +179,9 @@ const ShopDetail = () => {
     }
     return stars;
   };
-
+if (loading) return <Loading/>
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
+    <div className="w-full p-6 bg-white rounded-lg ">
       {/* Header avec logo et informations principales */}
       <div className="flex flex-col md:flex-row items-start md:items-center gap-6 mb-8">
         <div className="flex-shrink-0">
@@ -311,11 +293,11 @@ const ShopDetail = () => {
           </h3>
           <div className="space-y-3">
             <div>
-              <p className="text-sm font-medium text-gray-600">Date de création</p>
+              <p className="text-sm font-medium text-gray-600">Created At</p>
               <p className="text-gray-900">{formatDate(shop?.created_at)}</p>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-600">Dernière mise à jour</p>
+              <p className="text-sm font-medium text-gray-600">Updated At</p>
               <p className="text-gray-900">{formatDate(shop?.updated_at)}</p>
             </div>
           </div>
@@ -338,15 +320,45 @@ const ShopDetail = () => {
         </div>
       </div>
       {/* information user */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-6 rounded-lg mt-6">
-        <div className="bg-gray-50 p-6 rounded-lg">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">User Information</h3>
+    <div className='flex flex-row-reverse justify-between items-center mt-6'>
+      <div className='bg-gray-50 p-6 rounded-lg'>
+        <div className='flex gap-2 flex-col  w-full' >
+          <h1 className='text-lg font-semibold text-gray-900 mb-4'>Action Status</h1>
+          <button 
+          onClick={async()=>{
+            putStatusShop(shop?.id,'active',setSuccess,setError)
+            const data=await getShop(id,setError)
+            setShop(data)
+          }}
+          className='text-blue-500 border border-blue-500  hover:bg-blue-500 hover:text-white px-4 py-2 rounded-md'>Active</button>
+          <button
+          onClick={async()=>{
+            putStatusShop(shop?.id,'inactive',setSuccess,setError)
+            const data=await getShop(id,setError)
+            setShop(data)
+          }}
+          className='text-red-500 border border-red-500  hover:bg-red-500 hover:text-white px-4 py-2 rounded-md'>Inactive</button>
+          <button
+          onClick={async()=>{
+            putStatusShop(shop?.id,'suspended',setSuccess,setError)
+            const data=await getShop(id,setError)
+            setShop(data)
+          }}
+          className='text-yellow-500 border border-yellow-500  hover:bg-yellow-500 hover:text-white px-4 py-2 rounded-md'>Suspended</button>
+    
         </div>
+      </div>
+    <div className=" mt-6 bg-gray-50 p-6 rounded-lg">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">User Information</h3>
+        <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1  gap-6 '>
         <div className='flex items-center gap-2'><label className='text-sm font-medium text-gray-600' htmlFor="">Name</label><span>{shop?.user?.name}</span></div>
         <div className='flex items-center gap-2'><label className='text-sm font-medium text-gray-600' htmlFor="">Email</label><span>{shop?.user?.email}</span></div>
         <div className='flex items-center gap-2'><label className='text-sm font-medium text-gray-600' htmlFor="">Date de création</label><span>{shop?.user?.created_at}</span></div>
         <div className='flex items-center gap-2'><label className='text-sm font-medium text-gray-600' htmlFor="">last update</label><span>{shop?.user?.updated_at}</span></div>
-     </div>
+    
+        </div>
+      </div>
+    </div>
      <div className='mt-6'>
       <h2 className='text-lg font-semibold text-gray-900 mb-4'>Products</h2>
      <table className='mt-6 w-full'>
@@ -371,7 +383,7 @@ const ShopDetail = () => {
           <td className='py-4 px-6'>
             <button 
             onClick={()=>{
-              navigate(`/admin/products/${product.id}`)
+              navigate(`/admin/products/show/${product.id}`)
             }}
             className=' text-white px-4 py-2 rounded-md'>
               <Eye className=' text-blue-500'  size={20}/>
@@ -382,6 +394,49 @@ const ShopDetail = () => {
       </tbody>
      </table>
      </div>
+     {/* orders */}
+     <div className='mt-6'>
+      <h2 className='text-lg font-semibold text-gray-900 mb-4'>Orders</h2>
+      <table className='mt-6 w-full'>
+        <thead>
+          <tr className='bg-gray-100'>
+            <th className='py-4 px-6'>ID</th>
+            <th className='py-4 px-6'>User</th>
+            <th className='py-4 px-6'>Products</th>
+            <th className='py-4 px-6'>Status</th>
+            <th className='py-4 px-6'>Total</th>
+            <th className='py-4 px-6'>Date</th>
+            <th className='py-4 px-6'>Action</th>
+          </tr>
+        </thead>
+        <tbody> 
+          {shop?.orders?.length > 0 ? shop?.orders?.map((order)=>(
+            <tr className='border-b border-gray-200' key={order.id}>
+              <td className='py-4 px-6'>{order.id}</td>
+              <td className='py-4 px-6'>{order.user.name}</td>
+              <td className='py-4 px-6'>{order.user.products.length}</td>
+              <td className='py-4 px-6'>{order.status}</td>
+              <td className='py-4 px-6'>{order.total}</td>
+              <td className='py-4 px-6'>{formatDate(order.created_at)}</td>
+              <td className='py-4 px-6'>
+                <button 
+                onClick={()=>{
+                  navigate(`/admin/detaill-order/${order.id}`)
+                }}
+                className='text-white px-4 py-2 rounded-md'>
+                  <Eye className=' text-blue-500'  size={20}/>
+                </button>
+              </td>
+            </tr>
+          )) : <tr>
+            <td colSpan={7} className='py-4 px-6 text-center'>No orders found</td>
+          </tr>}
+        </tbody>
+      </table>
+     </div>
+     {/* success & error */}
+     {success?.etats && <NotifySuccess message={success.message} sucess={success.etats}  onClose={()=>setSuccess(null)}/>}
+     {error?.etats && <NotifyError message={error.message} title={"Error"}  isVisible={error.etats} onClose={()=>setError(null)}/>}
       </div>
   );
 };

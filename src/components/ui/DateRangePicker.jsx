@@ -6,28 +6,34 @@ import CalendarRange from './Calendar';
 
 
 
-const DateRangePicker = ({ strokePeriods ,searchCallback,NotIcon}) => {
-  const [periodOptions,setPeriodOptions] = useState([
-  { name: "Today", value: [new Date(), new Date()] },
-  { name: "Yesterday", value: [new Date(Date.now() - 86400000), new Date(Date.now() - 86400000)] },
-  { name: "Last 7 Days", value: [new Date(Date.now() - 6 * 86400000), new Date()] },
-  { name: "Last 15 Days", value: [new Date(Date.now() - 14 * 86400000), new Date()] },
-  { name: "Last 30 Days", value: [new Date(Date.now() - 29 * 86400000), new Date()] },
-  { name: "This Month", value: [new Date(new Date().getFullYear(), new Date().getMonth(), 1), new Date()] },
-]);
+const DateRangePicker = ({ strokePeriods, searchCallback, NotIcon, onChange }) => {
+  const [periodOptions, setPeriodOptions] = useState([
+    { name: "Today", value: [new Date(), new Date()] },
+    { name: "Yesterday", value: [new Date(Date.now() - 86400000), new Date(Date.now() - 86400000)] },
+    { name: "Last 7 Days", value: [new Date(Date.now() - 6 * 86400000), new Date()] },
+    { name: "Last 15 Days", value: [new Date(Date.now() - 14 * 86400000), new Date()] },
+    { name: "Last 30 Days", value: [new Date(Date.now() - 29 * 86400000), new Date()] },
+    { name: "This Month", value: [new Date(new Date().getFullYear(), new Date().getMonth(), 1), new Date()] },
+  ]);
   const [showList, setShowList] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState(null);
   const containerRef = useRef(null);
- const formatDate = (date) => date.toLocaleDateString();
+  const formatDate = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+  
 
-const formatPeriodDisplay = (selected) => {
-  if (!selected) return "";
-  if (selected.type === "preset") return selected.name;
-  if (selected.type === "custom" && selected.value)
-    return `${formatDate(selected.value[0])} | ${formatDate(selected.value[1])}`;
-  return "";
-};
+  const formatPeriodDisplay = (selected) => {
+    if (!selected) return "";
+    if (selected.type === "preset") return selected.name;
+    if (selected.type === "custom" && selected.value)
+      return `${formatDate(selected.value[0])} | ${formatDate(selected.value[1])}`;
+    return "";
+  };
   // Handle click outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -44,15 +50,17 @@ const formatPeriodDisplay = (selected) => {
 
   const handleCalendarApply = ({ start, end }) => {
     setSelectedPeriod({ type: "custom", value: [start, end] });
-    strokePeriods(start, end);
+    strokePeriods(formatDate(start), formatDate(end));
+    console.log("handleCalendarApply")
+    console.log(start, end)
+    onChange && onChange({ start, end });
+
     setShowCalendar(false);
     setShowList(false);
   };
-
   const clearSelection = () => {
     setSelectedPeriod(null);
   };
-  console.log(selectedPeriod)
 
   return (
     <div className="p-6 max-w-lg ">
@@ -75,7 +83,7 @@ const formatPeriodDisplay = (selected) => {
             </button>
           )}
           {!NotIcon && (
-            <SearchIcon onClick={()=>{
+            <SearchIcon onClick={() => {
               searchCallback(selectedPeriod);
             }} className="w-10 h-full p-2 cursor-pointer bg-blue-800 text-white rounded-r-lg" />
           )}

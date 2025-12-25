@@ -45,5 +45,8 @@ export const postLicense=async(data,setSuccess,setError)=>await axiosConfig.post
 export const putLicense=async(id,data,setSuccess,setError)=>await axiosConfig.put(`/admin/licenses/${id}`,data).then(res=>setSuccess({etats:true,message:res.data.message})).catch(err=>setError({etats:true,message:err.response.data.message}))
 export const deleteLicense=async(id,setSuccess,setError)=>await axiosConfig.delete(`/admin/licenses/${id}`).then(res=>setSuccess({etats:true,message:res.data.message})).catch(err=>setError({etats:true,message:err.response.data.message}))
 
-
+// shop products
+export const putStatusShop=async(id,status,setSuccess,setError)=>await axiosConfig.put(`/admin/shops/status/${id}`,{status})
+.then(res=>setSuccess({etats:true,message:res.data.message}))
+.catch(err=>setError({etats:true,message:err.response.data.message}))
 

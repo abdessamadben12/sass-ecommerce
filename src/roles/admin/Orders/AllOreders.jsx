@@ -15,10 +15,8 @@ const OrdersColumns = [
     label:"Order ID",
     render:order=>order.id
   },
-  { key: "product", label: "Products" ,
-    render:(order) => order.order_items?.map(product => <span key={product.id} 
-    className='bg-gray-200 p-2 rounded-full text-sm'>
-      {product.product.name}</span>) ?? "--"
+  { key: "product", label: "Nbr Products " ,
+    render:(order) => order.order_items_count
   },
     {
       key: "buyer.name",

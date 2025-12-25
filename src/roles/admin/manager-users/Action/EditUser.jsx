@@ -36,10 +36,10 @@ export default function UserEdit({user,onSubmit,loading}) {
   };
   console.log(verificationStatus)
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-xl p-8 backdrop-blur-lg border border-white/20">
-          <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+    <div className="min-h-screen  py-8 px-4 bg-white">
+      <div className="max-w-4xl mx-auto bg-white">
+        <div className=" p-8 backdrop-blur-lg border border-white/20">
+          <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center ">
             Information of{" "+user?.name}
           </h1>
       
@@ -192,8 +192,8 @@ export default function UserEdit({user,onSubmit,loading}) {
             disabled={isSubmitting}
             className={`w-full py-4 px-8 rounded-2xl font-bold text-lg transition-all duration-500 transform shadow-2xl ${
               isSubmitting
-                ? 'bg-gradient-to-r from-gray-400 to-gray-500 text-gray-200 cursor-not-allowed'
-                : 'bg-gradient-to-r from-blue-400 via-purple-500 to-blue-400 hover:from-blue-500 hover:via-purple-600 hover:to-blue-500 text-white hover:scale-105 hover:shadow-blue-500/25 active:scale-95'
+                ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                : ' bg-blue-500    hover:from-blue-500 hover:via-purple-600 hover:to-blue-500 text-white hover:scale-105 hover:shadow-blue-500/25 active:scale-95'
             } focus:outline-none focus:ring-4 focus:ring-blue-300 focus:ring-opacity-50`}
           >
             <div className="flex items-center justify-center space-x-3">

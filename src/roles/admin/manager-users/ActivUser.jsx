@@ -1,6 +1,5 @@
 import  { useMemo, useEffect, useState } from 'react'
 import DataTable from '../../../components/ui/DataTable'
-import {   Printer } from 'lucide-react';
 import { deleteUsers, getActiveUser } from '../../../services/ServicesAdmin/userServices';
 import NotifyError from '../../../components/ui/NotifyError';
 import Pagination from '../../../components/ui/pagination';
@@ -25,7 +24,6 @@ export default function ActiveUser() {
             setActiveUsers(data.data.data)
             setTotalPages(data.data.last_page)
             setCurrentPage(data.data.current_page)
-            console.log(data.data.last_page)
             setLoading(false)
          }
         fetchData()
@@ -37,16 +35,15 @@ export default function ActiveUser() {
         await getActiveUser(currentPage,perPage,role,inputSerch,setMessaheError)
       return await deleteUsers(id,setMessaheError,setSucess)
     }
-    console.log(sucess)
    const columns = useMemo(() => {
   if (role === "admin" ) {
-    return ["name", "email","balnced_amount", ,"role", "last_login_at", "actions"];
+    return ["name", "email", "last_login_at", "actions"];
   } else if (role === "seller") {
-    return [ "name","store_name","balance_amount" ,"role", "total_sales","last_login_at", "actions"];
+    return [ "name","store_name" , "total_sales","last_login_at", "actions"];
   } else if (role === "buyer") {
-    return [ "name", "email", "orders_count", "last_order_date","role", "last_login_at", "balnced_amount", "actions"];
+    return [ "name", "email", "orders_count", "last_order_date", "last_login_at", "actions"];
   } 
-  else return ["name", "email","balnced_amount", "role", "last_login_at", "actions"];
+  else return ["name", "email", "role", "last_login_at", "actions"];
 }, [role])
     
     return (
@@ -54,15 +51,6 @@ export default function ActiveUser() {
     <div>
 <div className='flex justify-between items-center'>        
   <h1 className='font-bold text-black text-2xl capitalize'>Users Management</h1>
-  <button 
-  onClick={()=>window.open("http://localhost:8000/api/admin/templates/pdf-user","_blank")}
-  className='border-blue-700 border text-blue-700 transition-colors duration-500
-   hover:bg-blue-700 hover:text-white px-4 py-2 rounded-md flex items-center gap-2'
-   >
-    <Printer /> Export Pdf Users</button>
-
-
-
 </div>
         <HeaderTable menu={<Menu handleRole={handleRole} role={role} /> } setInputSearch={setInputSearch} inputSerch={inputSerch}/>
      </div>

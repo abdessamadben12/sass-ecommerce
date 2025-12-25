@@ -126,13 +126,13 @@ export default function DetaillUser() {
       title: "Logins",
       icon: <List className="w-5 h-5" color="#FFFFFF" />,
       bgColor: "bg-blue-500",
-      action:()=>navigate("/admin/"+data.user.id)
+      action:()=>navigate("/admin/"+data.user?.id)
     },
     {
       title: "Notifications",
       icon: <Bell className="w-5 h-5" color="#FFFFFF" />,
       bgColor: "bg-gray-500",
-      action:()=>navigate("/admin/detaill-user/notification/"+data.user.id)
+      action:()=>navigate("/admin/detaill-user/notification/"+data.user?.id)
     },
     {
       title: "Ban User",
@@ -141,7 +141,6 @@ export default function DetaillUser() {
     },
   ];
   async function handleBalanceAdd(param){
-    console.log(data.user.id)   
      const dataForm={...param,id:data.user.id}
        const response= await addBalnaceUser(dataForm,setSucess,setError)
        console.log(dataForm)
@@ -212,7 +211,7 @@ export default function DetaillUser() {
         onClose={() => setError(null)}
         isVisible={!!error}
       />
-      <UserEdit user={data.user} onSubmit={handleUpdate} loading={loading} />
+      <UserEdit user={data?.user} onSubmit={handleUpdate} loading={loading} />
     {ShowAddBalance && <BalanceModal  onClose={()=>setShowAddBalance(false)} onAction={handleBalanceAdd} title="Add Balance"/>}
     {ShowRemoveBalance && <BalanceModal  onClose={()=>setShowRemoveBalance(false)} onSubmit={handleBalanceRemove} title="Subtract Balance"/>}
     {sucess.show  && <NotifySuccess message={sucess.message} sucess={sucess.show} onClose={setSucess} /> }

@@ -29,6 +29,7 @@ import AllCategory from "../roles/admin/Setting/categories/Category";
 import AddCategory from "../roles/admin/Setting/categories/AddCategory";
 import EditCategory from "../roles/admin/Setting/categories/EditCategory";
 import ShopDetail from "../roles/admin/Shops_Products/Shops/ShopDetaill";
+import SendNotification from "../roles/admin/Notification/SendNotification";
 
 
 export default function  AppRouter(){
@@ -71,8 +72,12 @@ export default function  AppRouter(){
       <Route path="all-tickets" element={<AllTickets/>}/>
       <Route path="reply-ticket/:id" element={<ReplyTicket/>}/>
       <Route path="detaill-ticket/:id" element={<TicketDetail/>}/>
-      
+      {/* send notification */}
+      <Route path="send-notification" element={<SendNotification/>}/>
+
       </Route>
+      {/* admin profile */}
+      <Route path="/admin/profile" element={<DetaillUser/>}/>
       <Route path="/file-view" element={<FileViewer/>}/>
     </Routes>
 

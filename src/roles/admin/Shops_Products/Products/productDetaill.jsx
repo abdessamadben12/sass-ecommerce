@@ -36,21 +36,6 @@ const ProductDetail = () => {
       meta_description: product?.meta_description
     });
   }, [id]);
-
-  const handleEdit = () => {
-    setIsEditing(!isEditing);
-  };
-
-  const handleSave = () => {
-    // Sauvegarder les modifications
-    setProduct({
-      ...product,
-      ...editForm,
-      tags: editForm.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
-    });
-    setIsEditing(false);
-  };
-
   const formatFileSize = (bytes) => {
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     if (bytes === 0) return '0 Byte';
@@ -94,27 +79,8 @@ const ProductDetail = () => {
               <h1 className="text-xl font-semibold text-gray-900">Product detail</h1>
             </div>
             <div className="flex items-center gap-3">
-              {getStatusBadge(product.status)}
-              <button
-                onClick={handleEdit}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                  isEditing 
-                    ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' 
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
-                }`}
-              >
-                {isEditing ? <X className="h-4 w-4" /> : <Edit className="h-4 w-4" />}
-                {isEditing ? 'Cancel' : 'Edit'}
-              </button>
-              {isEditing && (
-                <button
-                  onClick={handleSave}
-                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                >
-                  <Save className="h-4 w-4" />
-                  Save
-                </button>
-              )}
+              {getStatusBadge(product?.status)}
+             
             </div>
           </div>
         </div>
@@ -162,52 +128,6 @@ const ProductDetail = () => {
             {/* Informations produit */}
             <div className="bg-white rounded-lg shadow-sm border">
               <div className="p-6">
-                {isEditing ? (
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
-                      <input
-                        type="text"
-                        value={editForm.title}
-                        onChange={(e) => setEditForm({...editForm, title: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                      <textarea
-                        value={editForm.description}
-                        onChange={(e) => setEditForm({...editForm, description: e.target.value})}
-                        rows={4}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Base price (€)</label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={editForm.base_price}
-                          onChange={(e) => setEditForm({...editForm, base_price: parseFloat(e.target.value)})}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Tags (separated by commas)</label>
-                        <input
-                          type="text"
-                          value={editForm.tags}
-                          onChange={(e) => setEditForm({...editForm, tags: e.target.value})}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ) : (
                   <div>
                     <div className="flex items-start justify-between mb-4">
                       <div>
@@ -239,7 +159,7 @@ const ProductDetail = () => {
                       ))}
                     </div>
                   </div>
-                )}
+               
 
                 {/* Métadonnées techniques */}
                 <div className="border-t pt-6">
@@ -354,17 +274,6 @@ const ProductDetail = () => {
                   <span className="text-gray-600">Member since:</span>
                   <span>{new Date(product?.shop?.user?.created_at).toLocaleDateString()}</span>
                 </div>
-              </div>
-            </div>
-
-            {/* Actions rapides */}
-            <div className="bg-white rounded-lg shadow-sm border p-6">
-              <h3 className="text-lg font-semibold mb-4">Actions</h3>
-              <div className="space-y-2">
-                <button className="w-full flex items-center gap-2 px-4 py-2 text-left text-sm bg-red-50 text-red-700 rounded-lg hover:bg-red-100">
-                  <Trash2 className="h-4 w-4" />
-                  Delete
-                </button>
               </div>
             </div>
           </div>

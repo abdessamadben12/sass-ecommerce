@@ -218,14 +218,14 @@ const EditCategory = (  ) => {
     
 
   };
-  console.log(formData.parent_id)
+ 
 
   if (loadingData) {
     return (
      <Loading/>
     );
   }
-  console.log(formData)
+ 
 
 
   return (

@@ -51,7 +51,7 @@ export default function BalanceModal({ onClose, onAction, title }) {
         amount:amount,
         remark:remark
     }
-    console.log(data)
+   
       onAction(data);
     closeWithAnimation();
   };

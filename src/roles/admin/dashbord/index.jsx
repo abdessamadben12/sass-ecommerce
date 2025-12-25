@@ -28,8 +28,9 @@ import Loading from '../../../components/ui/loading';
     
     useEffect(()=>{
        const fetchData=async()=>{
-        await getCsrfTocken()
         setLoading(true)
+        await getCsrfTocken()
+       
         const users= await getAnnalyseUser()
         const deposits=await getDepositAnnalyse()
         const Withdrawals=await getWithdrawls()
@@ -47,11 +48,10 @@ import Loading from '../../../components/ui/loading';
        }
        fetchData()
     },[])
-    console.log(Withdrawal)
-    if(loading==true) return <div className='h-screen flex justify-center items-center'><Loading/></div>
+   
     return (
         <>
-    <div>
+    {loading ?<Loading/> :<div>
         <div>
              <h1 className="text-xl font-bold text-gray-600 mb-5">Dashboard</h1>
         </div>
@@ -97,7 +97,7 @@ import Loading from '../../../components/ui/loading';
         <div className='grid grid-cols-1 mt-10 gap-2'>
              <TransactionsReport/>
         </div>
-     </div>
+     </div>}
      
      </>
     );
