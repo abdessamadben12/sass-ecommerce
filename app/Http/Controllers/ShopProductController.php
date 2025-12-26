@@ -76,4 +76,15 @@ class ShopProductController extends Controller
         ], 200);
       
     }
+
+    public function updateStatus(Request $request){
+        $validate=$request->validate([
+            "status"=>"required|string|in:active,inactive,suspended"
+        ]);
+        $id = $request->id;
+        $shop = Shop::find($id);
+        $shop->status = $validate["status"] ?? "active";
+        $shop->save();
+        return response()->json(["message"=>"Status updated successfully"], 200);
+    }
 }

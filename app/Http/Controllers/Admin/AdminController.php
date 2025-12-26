@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use Carbon\Carbon;
-use App\Models\Shop;
 use App\Models\User;
 use App\Models\Order;
 use App\Models\Deposit;
@@ -227,55 +226,57 @@ public function getDepositWithdrawChartData(){
 
 //  transaction report
    public function dailyTransactionsReport(Request $request)
-    {
-        // ✅ 1. Lire les dates "from" et "to" (optionnelles)
-       $from = $request->from && $request->from !== 'null'
-    ? Carbon::parse($request->from)
-    : Carbon::now()->subDays(30);
+{
+    // 1. Dates From/To
+    $from = $request->from && $request->from !== 'null'
+        ? Carbon::parse($request->from)
+        : Carbon::now()->subDays(30);
 
     $to = $request->to && $request->to !== 'null'
-    ? Carbon::parse($request->to)
-    : Carbon::now();
+        ? Carbon::parse($request->to)
+        : Carbon::now();
 
-        // ✅ 2. Récupérer les transactions groupées
-        $transactions = DB::table('transactions')
-            ->selectRaw("
-                DATE(created_at) as date,
-                SUM(CASE WHEN trx_type = '+' THEN amount ELSE 0 END) as plusTransactions,
-                SUM(CASE WHEN trx_type = '-' THEN amount ELSE 0 END) as minusTransactions
-            ")
-            ->whereBetween('created_at', [$from->startOfDay(), $to->endOfDay()])
-            ->groupBy(DB::raw("DATE(created_at)"))
-            ->orderBy('date', 'asc')
-            ->get();
+    // 2. Récupérer les transactions groupées par jour
+    $transactions = DB::table('transactions')
+        ->selectRaw("
+            DATE(created_at) as date,
+            SUM(CASE WHEN trx_type = '+' THEN amount ELSE 0 END) as plusTransactions,
+            SUM(CASE WHEN trx_type = '-' THEN amount ELSE 0 END) as minusTransactions
+        ")
+        ->whereBetween('created_at', [$from->copy()->startOfDay(), $to->copy()->endOfDay()])
+        ->groupBy(DB::raw("DATE(created_at)"))
+        ->orderBy('date', 'asc')
+        ->get();
 
-        // ✅ 3. Re-indexer les résultats par date
-        $grouped = collect($transactions)->keyBy(function ($item) {
-            return Carbon::parse($item->date)->format('Y-m-d');
-        });
+    // 3. Re-indexation par date (Y-m-d)
+    $grouped = collect($transactions)->keyBy(function ($item) {
+        return Carbon::parse($item->date)->format('Y-m-d');
+    });
 
-        // ✅ 4. Générer tous les jours entre $from et $to
-        $allDates = collect();
-        $current = $from->copy();
-        while ($current <= $to) {
-            $allDates->push($current->copy());
-            $current->addDay();
-        }
-
-        // ✅ 5. Créer le rapport final
-        $report = $allDates->map(function ($date) use ($grouped) {
-            $key = $date->format('Y-m-d');
-            $data = $grouped->get($key);
-
-            return [
-                'date' => $date->format('d-F-Y'),
-                'plusTransactions' => $data ? floatval($data->plusTransactions) : 0,
-                'minusTransactions' => $data ? floatval($data->minusTransactions) : 0,
-            ];
-        });
-
-        return response()->json($report);
+    // 4. Générer toutes les dates entre from et to
+    $allDates = collect();
+    $current = $from->copy();
+    while ($current <= $to) {
+        $allDates->push($current->copy());
+        $current->addDay();
     }
+
+    // 5. Rapport final
+    $report = $allDates->map(function ($date) use ($grouped) {
+
+        $key = $date->format('Y-m-d');
+        $data = $grouped->get($key); // <-- correction ici
+
+        return [
+            'date' => $date->format('d-F-Y'),
+            'plusTransactions' => $data ? (float) $data->plusTransactions : 0,
+            'minusTransactions' => $data ? (float) $data->minusTransactions : 0,
+        ];
+    });
+
+    return response()->json($report);
+}
+
     // public function getOrderWithUserChart(Request $request)
     // {
     //     $from=$request->from ==null ? Carbon::parse();

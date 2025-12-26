@@ -14,7 +14,6 @@ return new class extends Migration
          Schema::disableForeignKeyConstraints();
         Schema::create('product_settings', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('category_id')->constrained('categories')->onDelete('cascade');
             $table->foreignId('format_id')->constrained('product_formats')->onDelete('cascade');
 
             // Règles techniques

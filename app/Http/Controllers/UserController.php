@@ -89,7 +89,17 @@ class UserController extends Controller
     } 
     public function getUser(Request $request){
         $id = $request->id;
-        $user=User::with(["balance", "orders", "shops.products","withdrawals","deposits","transactions","profit","shops.profits","details"])
+        if(User::find($id)->role=="seller"){
+            $user=User::find($id)->with(["balance", "orders","withdrawals","deposits","details"])
+            ->withCount("orders")
+            ->withSum("withdrawals","amount")
+            ->withSum("deposits","amount")
+            ->withSum("transactions","amount")  
+            ->withSum("profit","total_amount")->find($id);
+            return response()->json(["user"=>new UserResource($user)]);
+
+        }
+        $user=User::with(["balance", "orders", "shops.products","withdrawals","deposits","transactions","profit","details"])
         ->withCount('products')
         ->withCount("orders")
         ->withSum("withdrawals","amount")
@@ -97,9 +107,7 @@ class UserController extends Controller
         ->withSum("transactions","amount")  
         ->withSum("profit","total_amount")
         ->find($id);
-       $totalShopProfit = $user->shops->flatMap(function ($shop) {
-        return $shop->profits;
-})->sum('total_amount');
+       $totalShopProfit = $user->profit->sum('total_amount');
         $totalDueAmount = $user->shops
                 ->flatMap->profits
         ->where('is_paid', false)
@@ -185,8 +193,8 @@ class UserController extends Controller
     // Update main user fields
     $user->update([
         'email' => $request->email,
-        'email_verified_at' => $request->verified_email ? now() : null,
-        'is_2fa_enabled' => $request->twoFA ? 1 : 0,
+        'email_verified_at' => $request->verfied_email ? now() : null,
+        'is_2fa_enabled' => $request->twoFA ? 1: 0,
     ]);
     // Update or create details
     $user->details()->updateOrCreate(
@@ -198,14 +206,16 @@ class UserController extends Controller
             'address'    => $request->address,
             'city'       => $request->city,
             'state'      => $request->state,
-            'zip'   => $request->zip,
+            'zip'   => $request->zipCode,
             'country'    => $request->country,
         ]
     );
 
     return response()->json([
         'message' => 'User updated successfully',
-        'user'    => $user->fresh(['details']),
+        "2fa"=>$request->twoFA,
+        "email-verified"=>$request->verfied_email ? true : false,
+        // 'user'    => $user->fresh(['details']),
     ]);
 }
 

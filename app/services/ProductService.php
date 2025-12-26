@@ -103,9 +103,9 @@ public function getDetailsProduct($product)
         ->withCount('downloads')
         ->withCount('reviews')
         ->withCount('views')
-        ->withSum('order',"total_price")
-        ->withCount('order')
-        ->withAvg('order',"total_price")
+        ->withSum('orders',"total_amount")
+        ->withCount('orders')
+        ->withAvg('orders',"total_amount")
         ->first();
 
     if (Storage::disk("spaces_2")->exists($product->thumbnail_path)) {

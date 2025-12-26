@@ -1,10 +1,8 @@
 <?php
 
-use App\Models\Deposit;
-use Mockery\Matcher\Not;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ShopController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\OrdersController;
 use App\Http\Controllers\DepositController;
@@ -55,12 +53,14 @@ Route::delete("/admin/users/{id}", [UserController::class, 'deleteUser'])->name(
 Route::get("/admin/shops/statistique/{id}",[ShopProductController::class,"getStatistiqueShop"])->name('admin.shops.statistique');
 Route::get("/admin/shops",[ShopProductController::class,"getShops"])->name('admin.shops');
 Route::get("/admin/shops/{id}",[ShopProductController::class,"getShop"])->name('admin.shop');
+Route::put("/admin/shops/status/{id}",[ShopProductController::class,"updateStatus"])->name('admin.status');
 Route::get("/admin/products",[ShopProductController::class,"getProducts"])->name('admin.products');
 Route::get("/admin/product/{id}",[ShopProductController::class,"getProduct"])->name('admin.product');
 Route::put("/admin/products/{id}",[ShopProductController::class,"updateProduct"])->name('admin.products.update');
 Route::delete("/admin/products/{id}",[ShopProductController::class,"deleteProduct"])->name('admin.product.delete');
 // notification
 Route::get("/admin/notifications",[NotificationController::class,"getNotifications"])->name('admin.notifications');
+Route::get("/admin/send-nitification",[NotificationController::class,"sendNotification"])->name('admin.send-nitification');
 // deposits
 Route::get("/admin/deposits",[DepositController::class,"getDeposits"])->name('admin.deposits');
 // withdrawals
@@ -98,4 +98,5 @@ Route::prefix('/admin/templates')->group(function () {
     Route::post('/{template}/render', [TemplateController::class, 'render']);
 });
 Route::get('/pdf', [TemplateController::class, 'renderPdf']);
+
 require __DIR__.'/product.php';

@@ -5,8 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\License;
-
-
 class LicenseController extends Controller
 {
     public function getLicenses(Request $request)

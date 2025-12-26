@@ -42,9 +42,6 @@ $table->string('thumbnail_path')->nullable();
 
 // Status modération
 $table->enum('status', ['draft', 'pending', 'approved', 'rejected',"supended"])->default('draft');
-// SEO (optionnel mais utile)
-$table->string('meta_title')->nullable();
-$table->text('meta_description')->nullable();
 // Timestamps
 $table->timestamp('published_at')->nullable();
 $table->timestamps();

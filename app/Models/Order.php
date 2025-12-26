@@ -27,4 +27,8 @@ class Order extends Model
 {
     return $this->morphMany(Transaction::class, 'sourceable');
 }
+    public function orderItems()
+    {
+        return $this->hasMany(Order_item::class);
+    }
 }

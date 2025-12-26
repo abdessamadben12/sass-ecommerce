@@ -21,7 +21,7 @@ class FileUploadService
     {
         // Validate file
         $this->validateMainFile($file, $product);
-
+;;
         // Generate unique filename
         $filename = $this->generateMainFileName($file, $product);
         $path = self::MAIN_FILES_PATH . '/' . $product->shop_id . '/' . $filename;

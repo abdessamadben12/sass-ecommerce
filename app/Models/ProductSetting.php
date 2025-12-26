@@ -12,7 +12,6 @@ class ProductSetting extends Model
     public $timestamps = false;
     protected $table= 'product_settings';
     protected $fillable = [
-        'category_id',
         'format_id',
         'min_width',
         'min_height',

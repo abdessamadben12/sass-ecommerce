@@ -16,8 +16,8 @@ return new class extends Migration
             $table->bigIncrements('id');
 
             // علاقات
-            $table->foreignId('user_id')->constrained()->onDelete('cascade'); // صاحب الفاتورة (العميل)
-            $table->foreignId('order_id')->nullable()->constrained()->onDelete('set null'); // الطلب المرتبط (اختياري)
+            $table->foreignId('user_id')->constrained()->onDelete('cascade'); 
+            $table->foreignId('order_id')->nullable()->constrained()->onDelete('set null');
 
             // بيانات عامة
             $table->string('invoice_number')->unique();

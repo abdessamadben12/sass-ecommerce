@@ -29,11 +29,11 @@ class UserResource extends JsonResource
                 "zipCode" => $this->details->zip ?? "not entry",
                 "country" => $this->details->country ?? "not entry",
                 "image" => $this->details->image ?? "not entry",
-            "balance" => $this->balance->balance ?? 0,
-            "withdrawals_sum" => $this->withdrawals_sum_amount ?? 0,
+            "balance" => number_format($this->balance->balance,2,",") ?? 0,
+            "withdrawals_sum" => number_format($this->withdrawals_sum_amount,2,",") ?? 0,
             "deposits_sum" => $this->deposits_sum_amount ?? 0,
-            "transactions_sum" => $this->transactions_sum_amount ?? 0,
-            "total_profit" => $this->profit_sum_total_amount ?? 0,
+            "transactions_sum" => number_format($this->transactions_sum_amount,2,",") ?? 0,
+            "total_profit" => number_format($this->profit_sum_total_amount,2,",") ?? 0,
             "orders_count" => $this->orders_count ?? 0,
             "products_count" => $this->products_count ?? 0,
 
@@ -49,7 +49,6 @@ class UserResource extends JsonResource
                     "name" => $shop->name,
                     "description" => $shop->description,
                     "products" => $shop->products,
-                    "profits" => $shop->profits,
                 ];
             }),
         ];

@@ -55,14 +55,24 @@ class OrdersController extends Controller
                 $q->where('name', 'like', '%' . $category . '%');
             });
         }
-        $orders = $query->with(['orderItems.product.shop', 'user'])->orderBy('created_at', 'desc')->paginate($per_page);
+        $orders = $query->with(['orderItems.product.shop', 'user'])->withCount('orderItems')->orderBy('created_at', 'desc')->paginate($per_page);
         return response()->json($orders, 200);
     }
     public function getOrderDetail(Request $request)
     {
         $id = $request->id;
-        $order = Order::with(['orderItems.product.shop', 'user'])->find($id);
-        return response()->json($order, 200);
+        $order = Order::find($id);
+        return response()->json([
+            "id" => $order->id,
+            "custemer" => $order->user->name,
+            "custemer_email" => $order->user->email,
+            "total" => $order->total_price,
+
+            "items"=> count($order->orderItems) !=0?$order->orderItems->pluck('product')->file_format():[],
+            "status" => $order->status,
+            "date" => $order->created_at,
+            
+        ], 200);
     }
     
    

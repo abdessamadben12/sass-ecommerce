@@ -147,5 +147,5 @@ if ($categorie->icon && Storage::disk("spaces_2")->exists($categorie->icon)) {
         }
         return response()->json($categoryNames,200);
      }
-     
+      
 }
