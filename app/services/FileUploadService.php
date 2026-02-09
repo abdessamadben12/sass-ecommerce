@@ -52,18 +52,29 @@ class FileUploadService
     public function uploadPreviewImages(array $files, Product $product): array
     {
         $uploadedPaths = [];
+        $existingImages = $product->preview_images ?? [];
+        $existingHashes = [];
 
-        // Delete old preview images
-        if ($product->preview_images) {
-            foreach ($product->preview_images as $oldImage) {
-                if (Storage::disk("spaces_2")->exists($oldImage)) {
-                    Storage::disk("spaces_2")->delete($oldImage);
+        // Build hash map for existing images to avoid duplicates
+        foreach ($existingImages as $path) {
+            try {
+                if (Storage::disk("spaces_2")->exists($path)) {
+                    $content = Storage::disk("spaces_2")->get($path);
+                    $existingHashes[hash('sha256', $content)] = $path;
                 }
+            } catch (\Exception $e) {
+                // ignore hash errors
             }
         }
 
         foreach ($files as $index => $file) {
             $this->validatePreviewImage($file);
+
+            // Skip if same image already exists (by hash)
+            $newHash = hash_file('sha256', $file->getRealPath());
+            if (isset($existingHashes[$newHash])) {
+                continue;
+            }
 
             $filename = $this->generatePreviewImageName($file, $product, $index);
             $path = self::PREVIEW_IMAGES_PATH . '/' . $product->shop_id . '/' . $filename;
@@ -73,13 +84,19 @@ class FileUploadService
             $uploadedPaths[] = $storedPath;
         }
 
-        // Generate thumbnail from first image
-        if (!empty($uploadedPaths)) {
-            $thumbnailPath = $this->generateThumbnail($uploadedPaths[0], $product);
+        // Merge existing + new, limit to 10
+        $merged = array_values(array_merge($existingImages, $uploadedPaths));
+        if (count($merged) > 10) {
+            $merged = array_slice($merged, 0, 10);
+        }
+
+        // Generate thumbnail from first image if missing
+        if (!empty($merged) && empty($product->thumbnail_path)) {
+            $thumbnailPath = $this->generateThumbnail($merged[0], $product);
             $product->update(['thumbnail_path' => $thumbnailPath]);
         }
 
-        return $uploadedPaths;
+        return $merged;
     }
 
     /**

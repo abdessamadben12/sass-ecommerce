@@ -16,6 +16,7 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Storage;
 use App\Models\ProductFormat;
 use App\Models\ProductSetting;
+use Illuminate\Support\Facades\Auth;
 
 class ProductController extends Controller
 {
@@ -32,6 +33,20 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
+        // Backward-compatible query params
+        $request->merge([
+            'search' => $request->input('search', $request->input('serch')),
+            'sort_by' => $request->input('sort_by', $request->input('sort')),
+            'price_min' => $request->input('price_min', $request->input('min_price')),
+            'price_max' => $request->input('price_max', $request->input('max_price')),
+        ]);
+        if ($request->input('category_id') === 'all') {
+            $request->merge(['category_id' => null]);
+        }
+        if ($request->input('license_id') === 'all') {
+            $request->merge(['license_id' => null]);
+        }
+
         $filters = $request->validate([
             'category_id' => 'nullable',
             "license_id" => "nullable",
@@ -39,7 +54,7 @@ class ProductController extends Controller
             'price_min' => 'nullable|numeric|min:0',
             'price_max' => 'nullable|numeric|min:0',
             'search' => 'nullable|string|max:255',
-            'sort_by' => 'nullable|string|in:created_at,title,base_price,updated_at',
+            'sort_by' => 'nullable|string|in:created_at,title,base_price,updated_at,newest,price_asc,price_desc',
             'per_page' => 'nullable|integer|min:1|max:50'
         ]);
 
@@ -171,6 +186,10 @@ class ProductController extends Controller
                 'main_file_size' => $request->file('file')->getSize(),
                 'file_hash' => hash_file('sha256', $request->file('file')->getRealPath())
             ]);
+            $this->logAdminAction($product, 'upload_main_file', [
+                'file_path' => $filePath,
+                'file_size' => $request->file('file')->getSize(),
+            ]);
 
             return response()->json([
                 'message' => 'File uploaded successfully',
@@ -203,9 +222,11 @@ class ProductController extends Controller
 
         try {
             $imagePaths = $this->fileUploadService->uploadPreviewImages($request->file('images'), $product);
-            
             $product->update([
                 'preview_images' => $imagePaths
+            ]);
+            $this->logAdminAction($product, 'upload_preview_images', [
+                'count' => count($request->file('images')),
             ]);
 
             return response()->json([
@@ -269,6 +290,92 @@ class ProductController extends Controller
         $products = Product::where("status","pending")->get();
         return response()->json($products);
     }
+    public function submitForReview(Product $product): JsonResponse
+    {
+        try {
+            $this->productService->submitForReview($product);
+            $this->logAdminAction($product, 'submit_for_review');
+            return response()->json(['message' => 'Product submitted for review']);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+    }
+
+    public function removePreviewImage(Request $request, Product $product): JsonResponse
+    {
+        $data = $request->validate([
+            'index' => 'required|integer|min:0',
+        ]);
+
+        $images = $product->preview_images ?? [];
+        if (!array_key_exists($data['index'], $images)) {
+            return response()->json(['message' => 'Preview image not found'], 404);
+        }
+
+        $imagePath = $images[$data['index']];
+        unset($images[$data['index']]);
+        $images = array_values($images);
+
+        $product->update(['preview_images' => $images]);
+        $this->logAdminAction($product, 'remove_preview_image', [
+            'index' => $data['index'],
+            'image' => $imagePath,
+        ]);
+
+        try {
+            if ($imagePath) {
+                \Illuminate\Support\Facades\Storage::delete($imagePath);
+            }
+        } catch (\Exception $e) {
+            // ignore storage delete errors
+        }
+
+        return response()->json(['message' => 'Preview image removed']);
+    }
+    public function duplicateProduct(Product $product): JsonResponse
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+        try {
+            $newProduct = $this->productService->duplicateProduct($product, $user);
+            $this->logAdminAction($newProduct, 'duplicate_product', [
+                'original_id' => $product->id,
+            ]);
+            return response()->json(['message' => 'Product duplicated', 'data' => new ProductResource($newProduct)]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+    }
+    public function bulkUpdateStatus(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'product_ids' => 'required|array|min:1',
+            'product_ids.*' => 'integer|exists:products,id',
+            'status' => 'required|in:draft,pending,approved,rejected,suspended',
+            'reason' => 'nullable|string|max:255',
+        ]);
+
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $count = $this->productService->bulkUpdateProducts(
+            $data['product_ids'],
+            ['status' => $data['status'], 'reason' => $data['reason'] ?? null],
+            $user
+        );
+        $this->logAdminAction(null, 'bulk_update_products', [
+            'count' => $count,
+            'product_ids' => $data['product_ids'],
+            'status' => $data['status'],
+            'reason' => $data['reason'] ?? null,
+        ]);
+
+        return response()->json(['message' => 'Products updated', 'count' => $count]);
+    }
     public function putStatusProduct(Request $request,Product $product,string $status): JsonResponse
     {
         $validated = $request->validate([
@@ -276,10 +383,12 @@ class ProductController extends Controller
         ]);
         if($validated["reason"] == "null"){
             $product->update(["status"=>$status]);
+            $this->logAdminAction($product, 'update_status', ['status' => $status]);
             return response()->json(["message"=>"Product status updated successfully"]);
         }
         else{
             $product->update(["status"=>$status,"reason"=>$validated["reason"]]);
+            $this->logAdminAction($product, 'update_status', ['status' => $status, 'reason' => $validated["reason"]]);
             return response()->json(["message"=>"Product status updated successfully"]);
         }
     }
@@ -338,6 +447,26 @@ class ProductController extends Controller
         ]);
         $setting = ProductSetting::create($validated);
         return response()->json(["message"=>"Setting product created successfully"]);
+    }
+
+    private function logAdminAction(?Product $product, string $action, array $properties = []): void
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return;
+        }
+        try {
+            $logger = activity()->causedBy($user);
+            if ($product) {
+                $logger->performedOn($product);
+            }
+            if (!empty($properties)) {
+                $logger->withProperties($properties);
+            }
+            $logger->log($action);
+        } catch (\Exception $e) {
+            // ignore logging errors
+        }
     }
 
 }

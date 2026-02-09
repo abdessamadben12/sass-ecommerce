@@ -6,10 +6,12 @@ use Exception;
 use App\Models\User;
 use App\Models\Wallet;
 use Illuminate\Http\Request;
+use App\Services\MoneyService;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use App\Http\Requests\UpdateUserRequest;
-use App\Services\MoneyService;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
@@ -72,6 +74,31 @@ class UserController extends Controller
     $query = User::query();
     if(!empty($role) && $role !== 'null' && $role !== 'undefined'){
           $query->where('role', $role);
+    } 
+    public function createAdmin(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|string|min:8',
+            'role' => 'required|string|in:admin,moderator',
+        ]);
+
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+        ]);
+
+        $user->update([
+            'role' => $validated['role'],
+            'status' => 'active',
+        ]);
+
+        return response()->json([
+            'message' => 'Admin created successfully',
+            'user' => $user,
+        ], 201);
     }
     if(!empty($name) && $name !== 'null' && $name !== 'undefined'){
          $query->where(function ($q) use ($name) {
@@ -159,7 +186,7 @@ class UserController extends Controller
         : 'Balance added';
 
     $balance = floatval($request->amount);
-    $user = User::find($request->id);
+    $user = User::findOrFail($request->id);
     try {
         $moneyService->addBalance($user, $balance, $remark);
         return response()->json(["message" => "Balance updated successfully to the user's account"], 200);
@@ -168,25 +195,42 @@ class UserController extends Controller
     }
 }
 
-      public function removeBalnce(Request $request){
-        $request->validate([
-            "amount"=>"required|numeric:min:1",
-            "id"=>"required|exists:users,id",
-        ]);
-        $balance=$request->amount;
-        $user=$request->id;
-        try{
-        $user=User::find($request->input('id'))->balance;
-        if($user==null && $user< $balance){
-            return response()->json(["message"=>"Insufficient balance to perform this operation."]. 400); 
-        }
-        $user->balance()->update('balance', $balance-$user->balance()->balance());
-        return response()->json(["message"=>"Balance Updated successfully to the user's account"], 200); 
-        }
-        catch(Exception $e){
-            return response()->json($e->getMessage(), 400);
-        }  
+     
+public function subBalance(Request $request)
+{
+    $request->validate([
+        'amount' => 'required|numeric|min:1',
+        'id' => 'required|exists:users,id',
+    ]);
+
+    $amount = $request->amount;
+
+    try {
+        DB::transaction(function () use ($request, $amount) {
+
+            $user = User::find($request->id);
+
+            // Verrouillage du wallet
+            $wallet = $user->balance()->lockForUpdate()->first();
+
+            if (!$wallet || $wallet->balance < $amount) {
+                abort(400, 'Solde insuffisant pour effectuer cette opération.');
+            }
+
+            // Soustraction sécurisée
+            $wallet->decrement('balance', $amount);
+        });
+
+        return response()->json([
+            'message' => 'Opération effectuée avec succès.'
+        ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'message' => $e->getMessage()
+        ], 400);
     }
+}
   public function updateUser(UpdateUserRequest $request, $id){
     $user = User::findOrFail($id);
 

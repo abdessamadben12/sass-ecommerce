@@ -20,6 +20,8 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use App\Models\Order_item;
 use App\Models\ProductDownload;
+use App\Models\ProductView;
+use Carbon\Carbon;
 
 class ProductService
 {
@@ -103,9 +105,9 @@ public function getDetailsProduct($product)
         ->withCount('downloads')
         ->withCount('reviews')
         ->withCount('views')
-        ->withSum('orders',"total_amount")
+        ->withSum('orders',"total_price")
         ->withCount('orders')
-        ->withAvg('orders',"total_amount")
+        ->withAvg('orders',"total_price")
         ->first();
 
     if (Storage::disk("spaces_2")->exists($product->thumbnail_path)) {
@@ -114,6 +116,10 @@ public function getDetailsProduct($product)
 
     $updatedImages = [];
     foreach ($product->preview_images ?? [] as $image) {
+        if (is_string($image) && (str_starts_with($image, 'http://') || str_starts_with($image, 'https://'))) {
+            $updatedImages[] = $image;
+            continue;
+        }
         if (Storage::disk("spaces_2")->exists($image)) {
             $updatedImages[] = Storage::disk("spaces_2")->url($image);
         }
@@ -160,8 +166,11 @@ public function getDetailsProduct($product)
                 'meta_description' => $data['meta_description'] ?? null,
                 'status' => 'draft'
             ]);
-           activity()
-                ->performedOn($product)
+            $logger = activity();
+            if (auth()->check()) {
+                $logger->causedBy(auth()->user());
+            }
+            $logger->performedOn($product)
                 ->withProperties(['action' => 'created'])
                 ->log('Product created');
 
@@ -185,8 +194,11 @@ public function getDetailsProduct($product)
             }
 
             // Log activity
-            activity()
-                ->performedOn($product)
+            $logger = activity();
+            if (auth()->check()) {
+                $logger->causedBy(auth()->user());
+            }
+            $logger->performedOn($product)
                 ->withProperties(['action' => 'updated', 'changes' => $data])
                 ->log('Product updated');
 
@@ -216,8 +228,11 @@ public function getDetailsProduct($product)
             }
 
             // Log activity before deletion
-            activity()
-                ->performedOn($product)
+            $logger = activity();
+            if (auth()->check()) {
+                $logger->causedBy(auth()->user());
+            }
+            $logger->performedOn($product)
                 ->withProperties(['action' => 'deleted'])
                 ->log('Product deleted');
 
@@ -258,8 +273,11 @@ public function getDetailsProduct($product)
             event(new ProductSubmittedForReview($product));
 
             // Log activity
-            activity()
-                ->performedOn($product)
+            $logger = activity();
+            if (auth()->check()) {
+                $logger->causedBy(auth()->user());
+            }
+            $logger->performedOn($product)
                 ->withProperties(['action' => 'submitted_for_review'])
                 ->log('Product submitted for review');
         });
@@ -472,14 +490,24 @@ public function getDetailsProduct($product)
      */
     public function getProductStats(Product $product): array
     {
-        return [
-            'total_downloads' => $product->downloads()->count(),
-            'total_revenue' => $product->with("items.order")->whereHas("items.order",function($query){
-                $query->where("status","completed");
-            })->sum('items.price'),
-            "pending_products" => $product->where("status","pending")->count(),
-            "count_products" => $product->count(),
-        ];
+        $productsCount = Product::count();
+
+    $productsCountPending = Product::where('status', 'pending')->count();
+
+    $revenue = Order_item::query()
+        ->whereHas('order', function ($query) {
+            $query->where('status', 'completed');
+        })
+        ->sum('price');
+
+    $downloads = ProductDownload::count();
+
+    return [
+        'products_count'          => $productsCount,
+        'products_count_pending'  => $productsCountPending,
+        'revenue'                 => (float) $revenue,
+        'downloads'               => $downloads,
+    ];
     }
     public function getProductsStats(){
         $products_Count = Product::count();

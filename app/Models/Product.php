@@ -98,7 +98,12 @@ class Product extends Model
     {
         return $this->hasMany(ProductDownload::class,"product_id","id");
     }
+    public function items(){
+        return $this->hasMany(Order_item::class,"product_id","id");
+    }
 
+
+    
     public function reviews(): HasMany
     {
         return $this->hasMany(ProductReview::class,"product_id","id");

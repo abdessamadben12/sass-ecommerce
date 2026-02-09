@@ -13,6 +13,7 @@ use App\Models\Product;
 use App\Models\Withdrawal;
 use App\Models\Transaction;
 use App\Models\Notification;
+use App\Notifications\ResetPasswordNotification;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -53,6 +54,11 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new ResetPasswordNotification($token, $this->email));
+    }
     public function balance()
     {
         return $this->hasOne(Wallet::class,'user_id',"id");
