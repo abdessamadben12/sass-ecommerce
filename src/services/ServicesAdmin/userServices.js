@@ -38,6 +38,19 @@ export const addBalnaceUser=async(data,setSucess,setError)=>{
     }
     })
 }
+export const subBalanceUser=async(data,setSucess,setError)=>{
+    return await axiosConfig.put(`/admin/users/subBalance/${data.id}`,data).then(res=>setSucess({message:res.data.message,show:true})).
+    catch(err=>{  
+        const errors = err.response?.data?.errors;
+        if (errors && typeof errors === "object") {
+      const firstKey = Object.keys(errors)[0];
+      const firstMessage = errors[firstKey]?.[0] || err.message;
+      setError(firstMessage);
+    } else {
+      setError(err.message|| "An error occurred.");
+    }
+    })
+}
 
 export const deleteUsers = async (id,setError,setSucess) => await axiosConfig.delete(`/admin/users/${id}`).then(res => setSucess(res.data))
 .catch(err => setError(err.message));

@@ -1,17 +1,17 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  approveDeposit,
-  getDepositById,
-  rejectDeposit,
-} from "../../../services/ServicesAdmin/DepositService";
+  approveWithdrawal,
+  getWithdrawalById,
+  rejectWithdrawal,
+} from "../../../services/ServicesAdmin/WithdrawalsServices";
 import NotifyError from "../../../components/ui/NotifyError";
 import { NotifySuccess } from "../../../components/ui/NotifySucces";
 
-export default function DepositDetaill() {
+export default function WithdrawalDetaill() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [deposit, setDeposit] = useState(null);
+  const [withdrawal, setWithdrawal] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -21,8 +21,8 @@ export default function DepositDetaill() {
     setLoading(true);
     setError("");
     try {
-      const data = await getDepositById(id);
-      setDeposit(data);
+      const data = await getWithdrawalById(id);
+      setWithdrawal(data);
     } catch (err) {
       setError(err?.message || "Erreur de chargement.");
     } finally {
@@ -39,8 +39,8 @@ export default function DepositDetaill() {
     setError("");
     setSuccess("");
     try {
-      await approveDeposit(id);
-      setSuccess("Deposit confirmé.");
+      await approveWithdrawal(id);
+      setSuccess("Withdrawal approuvé.");
       load();
     } catch (err) {
       setError(err?.response?.data?.message || "Erreur.");
@@ -51,8 +51,8 @@ export default function DepositDetaill() {
     setError("");
     setSuccess("");
     try {
-      await rejectDeposit(id, rejectReason);
-      setSuccess("Deposit rejeté.");
+      await rejectWithdrawal(id, rejectReason);
+      setSuccess("Withdrawal rejeté.");
       load();
     } catch (err) {
       setError(err?.response?.data?.message || "Erreur.");
@@ -60,12 +60,12 @@ export default function DepositDetaill() {
   };
 
   if (loading) return <div className="p-6">Chargement...</div>;
-  if (!deposit) return <div className="p-6">Aucune donnée.</div>;
+  if (!withdrawal) return <div className="p-6">Aucune donnée.</div>;
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Deposit Detail</h1>
+        <h1 className="text-2xl font-bold text-gray-800">Withdrawal Detail</h1>
         <button
           className="text-sm text-gray-600 underline"
           onClick={() => navigate(-1)}
@@ -78,35 +78,27 @@ export default function DepositDetaill() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
           <div>
             <span className="text-gray-500">User:</span>{" "}
-            <span className="font-medium">{deposit.user?.name}</span>
+            <span className="font-medium">{withdrawal.user?.name}</span>
           </div>
           <div>
             <span className="text-gray-500">Email:</span>{" "}
-            <span className="font-medium">{deposit.user?.email}</span>
+            <span className="font-medium">{withdrawal.user?.email}</span>
           </div>
           <div>
             <span className="text-gray-500">Amount:</span>{" "}
-            <span className="font-medium">{deposit.amount}</span>
-          </div>
-          <div>
-            <span className="text-gray-500">Method:</span>{" "}
-            <span className="font-medium">{deposit.payment_method}</span>
-          </div>
-          <div>
-            <span className="text-gray-500">Transaction:</span>{" "}
-            <span className="font-medium">{deposit.transaction_id || "-"}</span>
+            <span className="font-medium">{withdrawal.amount}</span>
           </div>
           <div>
             <span className="text-gray-500">Status:</span>{" "}
-            <span className="font-medium">{deposit.status}</span>
+            <span className="font-medium">{withdrawal.status}</span>
           </div>
           <div>
             <span className="text-gray-500">Created:</span>{" "}
-            <span className="font-medium">{deposit.created_at}</span>
+            <span className="font-medium">{withdrawal.created_at}</span>
           </div>
           <div>
-            <span className="text-gray-500">Notes:</span>{" "}
-            <span className="font-medium">{deposit.notes || "-"}</span>
+            <span className="text-gray-500">Transaction:</span>{" "}
+            <span className="font-medium">{withdrawal.transactions?.trx || "-"}</span>
           </div>
         </div>
       </div>
@@ -126,14 +118,14 @@ export default function DepositDetaill() {
             <button
               className="px-4 py-2 rounded bg-green-600 text-white"
               onClick={handleApprove}
-              disabled={deposit.status !== "pending"}
+              disabled={withdrawal.status !== "pending"}
             >
-              Confirmer
+              Approuver
             </button>
             <button
               className="px-4 py-2 rounded bg-red-600 text-white"
               onClick={handleReject}
-              disabled={deposit.status !== "pending"}
+              disabled={withdrawal.status !== "pending"}
             >
               Rejeter
             </button>

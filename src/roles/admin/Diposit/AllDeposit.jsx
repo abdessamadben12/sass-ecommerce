@@ -8,7 +8,7 @@ import Pagination from '../../../components/ui/pagination';
 import Loading from '../../../components/ui/loading';
 const DepositColumns = [
   { key: "gateway", label: "Gateway | Transaction" ,
-    render:(deposit) => deposit.payment_method ?? "--"
+    render:(deposit) => `${deposit.payment_method ?? "--"} / ${deposit.transaction_id ?? "--"}`
   },
     {
     key:"user",
@@ -18,7 +18,7 @@ const DepositColumns = [
   {
     key: "trx",
     label: "Trx",
-    render: (deposit) => `${deposit.trx}` ?? "--",
+    render: (deposit) => `${deposit.transaction_id ?? "--"}`,
   },
   {
     key: "created_at",
@@ -53,6 +53,7 @@ const DepositColumns = [
 export default function AllDeposit() {
   const [inputSerch, setInputSearch] = useState("");
   const [selectedPeriod, setSelectedPeriod] = useState(null);
+  const [status, setStatus] = useState("all");
    const[dataDeposit,setDataDeposit]=useState([])
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(5);
@@ -69,7 +70,8 @@ export default function AllDeposit() {
     // Call the DepositService with the search input and selected period
     try {
       setLoading(true);
-      const data = await DepositService(null, inputSerch, selectedPeriod?.start, selectedPeriod?.end, currentPage, perPage, setError);
+      const statusParam = status === "all" ? null : status;
+      const data = await DepositService(statusParam, inputSerch, selectedPeriod?.start, selectedPeriod?.end, currentPage, perPage, setError);
       setDataDeposit(data.data);
       setTotalPages(data.last_page);
       setCurrentPage(data.current_page);
@@ -82,7 +84,7 @@ export default function AllDeposit() {
   };
   useEffect(() => {
     handleSearch();
-  }, [ currentPage, perPage]);
+  }, [ currentPage, perPage, status]);
   
   return (
     loading ? <Loading/> : <div className='min-h-screen p-6'>
@@ -98,6 +100,16 @@ export default function AllDeposit() {
                     inputSerch={inputSerch} 
                     setInputSearch={setInputSearch}
                      searchCallback={handleSearch} />     
+                    <select
+                      className="border rounded px-3 py-2 text-sm"
+                      value={status}
+                      onChange={(e) => setStatus(e.target.value)}
+                    >
+                      <option value="all">All Status</option>
+                      <option value="pending">Pending</option>
+                      <option value="confirmed">Confirmed</option>
+                      <option value="rejected">Rejected</option>
+                    </select>
                 </div>
             <DynamicTable
               data={dataDeposit}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { 
-  Search, Plus, Filter, Eye, Edit, Trash2, Check, X, 
+  Search, Plus, Filter, Eye, Edit, Check, X, 
   Star, TrendingUp, Package, Users, Tag, AlertTriangle,
   FileText, Image, Download, Upload, Settings, BarChart3,
   Settings2,
@@ -17,7 +17,7 @@ import {
   
 } from 'lucide-react';
 import Loading from '../../../../components/ui/loading';
-import { deleteFileFormat, deleteLicense, deleteProductSettings, getFileFormats, getLicenses, getPendingProducts, getProducts, getProductSettings, postFileFormat, postLicense, postProductSettings, putFileFormat, putLicense, putStatusProduct } from '../../../../services/ServicesAdmin/ShopProductsServices';
+import { deleteFileFormat, deleteLicense, deleteProductSettings, getFileFormats, getLicenses, getPendingProducts, getProducts, getProductSettings, postFileFormat, postLicense, postProductSettings, putFileFormat, putLicense, putStatusProduct, bulkUpdateProductStatus } from '../../../../services/ServicesAdmin/ShopProductsServices';
 import {  categoryByName } from '../../../../services/ServicesAdmin/CategoryService';
 import { getLicensesByName } from '../../../../services/ServicesAdmin/LicenseService';
 import Pagination from '../../../../components/ui/pagination';
@@ -38,7 +38,21 @@ const ProductManagement = () => {
   const [licenses,setLicenses]=useState([])
   const [filters, setFilters] = useState({
     status: 'all',
-    search: ''
+    search: '',
+    category_id: 'all',
+    min_price: '',
+    max_price: '',
+    license_id: 'all',
+    sort: 'newest',
+  });
+  const [appliedFilters, setAppliedFilters] = useState({
+    status: 'all',
+    search: '',
+    category_id: 'all',
+    min_price: '',
+    max_price: '',
+    license_id: 'all',
+    sort: 'newest',
   });
   const [stats,setStats]=useState({
     products_Count:0,
@@ -51,49 +65,31 @@ const ProductManagement = () => {
   const [total,setTotal]=useState(0)
   const [error,setError]=useState(false)
   const [success,setSuccess]=useState(false)
+  const [selectedIds, setSelectedIds] = useState([])
 
 
   useEffect(() => {
-   const fetchData = async () => {
-    setLoading(true);
-    const res=await getProducts(filters,{page:currentPage,per_page:perPage},setError)
-    const cat=await categoryByName(setError)
-    const lic=await getLicensesByName(setError)
-    setStats(res.stats)
-    setLicenses(lic)
-    setCategories(cat)
-    setProducts(res.products.data);
-    setCurrentPage(res.products.current_page)
-    setPerPage(res.products.per_page)
-    setTotal(res.products.last_page)
-    setLoading(false);
-    console.log(res.products)
-
-    }
-  fetchData()
-
-
-  }, []);
-  useEffect(()=>{
     const fetchData = async () => {
       setLoading(true);
-      const res=await getProducts(filters,{page:currentPage,per_page:perPage},setError)
-      setProducts(res.data);
-      setTotal(res.last_page)
+      const res = await getProducts(appliedFilters, { page: currentPage, per_page: perPage }, setError);
+      const cat = await categoryByName(setError);
+      const lic = await getLicensesByName(setError);
+      setStats(res.stats);
+      setLicenses(lic);
+      setCategories(cat);
+      setProducts(res.products?.data || []);
+      setCurrentPage(res.products?.current_page || 1);
+      setPerPage(res.products?.per_page || perPage);
+      setTotal(res.products?.last_page || 1);
       setLoading(false);
-      } 
-      fetchData()
-  },[currentPage,perPage])
-  const handleFilter=async()=>{
-    setLoading(true);
-   const res=await getProducts(filters,{page:1,per_page:10},setError)   
-   setCurrentPage(res.current_page)
-   setPerPage(res.per_page)
-   setTotal(res.last_page)
-   setProducts(res.data)
-   setLoading(false);
+    };
+    fetchData();
+  }, [currentPage, perPage, appliedFilters]);
 
-  }
+  const handleFilter = async () => {
+    setAppliedFilters(filters);
+    setCurrentPage(1);
+  };
 
   const contextValue = {
     products, setProducts,
@@ -106,7 +102,9 @@ const ProductManagement = () => {
     total,setTotal,
     error,setError,
     licenses,setLicenses,handleFilter,
-    stats
+    stats,
+    selectedIds,
+    setSelectedIds
   };
 
   return (
@@ -209,11 +207,66 @@ const TabNavigation = ({ activeTab, setActiveTab }) => {
 };
 // Products section
 const ProductsSection = () => {
-  const { products, loading, filters, setFilters } = useContext(ProductContext);
+  const { products, loading, filters, setFilters, selectedIds, setSelectedIds, handleFilter } = useContext(ProductContext);
+  const allIds = products?.map(p => p.id) || [];
+  const allSelected = allIds.length > 0 && allIds.every(id => selectedIds.includes(id));
 
   return (
     <div className="space-y-6">
       <ProductFilters filters={filters} setFilters={setFilters} />
+      <div className="bg-white p-3 rounded-lg shadow-sm border flex items-center gap-3">
+        <input
+          type="checkbox"
+          checked={allSelected}
+          onChange={(e) => {
+            if (e.target.checked) {
+              setSelectedIds(allIds);
+            } else {
+              setSelectedIds([]);
+            }
+          }}
+        />
+        <span className="text-sm text-gray-700">Select all</span>
+      </div>
+      {selectedIds.length > 0 && (
+        <div className="bg-white p-4 rounded-lg shadow-sm border flex items-center justify-between">
+          <div className="text-sm text-gray-700">
+            {selectedIds.length} selected
+          </div>
+          <div className="flex gap-2">
+            <button
+              className="px-3 py-2 text-sm bg-green-600 text-white rounded"
+              onClick={async () => {
+                await bulkUpdateProductStatus(selectedIds, 'approved');
+                setSelectedIds([]);
+                handleFilter();
+              }}
+            >
+              Approve
+            </button>
+            <button
+              className="px-3 py-2 text-sm bg-yellow-600 text-white rounded"
+              onClick={async () => {
+                await bulkUpdateProductStatus(selectedIds, 'suspended');
+                setSelectedIds([]);
+                handleFilter();
+              }}
+            >
+              Suspend
+            </button>
+            <button
+              className="px-3 py-2 text-sm bg-red-600 text-white rounded"
+              onClick={async () => {
+                await bulkUpdateProductStatus(selectedIds, 'rejected');
+                setSelectedIds([]);
+                handleFilter();
+              }}
+            >
+              Reject
+            </button>
+          </div>
+        </div>
+      )}
       {loading ? (
         <Loading />
       ) : (
@@ -353,10 +406,12 @@ const ProductGrid = ({ products }) => {
 // Product card
 const ProductCard = ({ product }) => {
   const navigate=useNavigate()
+  const { selectedIds, setSelectedIds } = useContext(ProductContext)
+  const isSelected = selectedIds.includes(product?.id)
   const getStatusColor = (status) => {
     switch (status) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'pending_review': return 'bg-yellow-100 text-yellow-800';
+      case 'approved': return 'bg-green-100 text-green-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
       case 'rejected': return 'bg-red-100 text-red-800';
       case 'suspended': return 'bg-red-100 text-red-800';
       case 'draft': return 'bg-gray-100 text-gray-800';
@@ -366,9 +421,9 @@ const ProductCard = ({ product }) => {
 
   const getStatusText = (status) => {
     switch (status) {
-      case 'active': return 'Actif';
-      case 'pending_review': return 'En attente';
-      case 'rejected': return 'Rejeté';
+      case 'approved': return 'Approuve';
+      case 'pending': return 'En attente';
+      case 'rejected': return 'Rejete';
       case 'draft': return 'Brouillon';
       case 'suspended': return 'Suspendu';
       default: return status?.charAt(0).toUpperCase() + status?.slice(1) || 'N/A';
@@ -397,7 +452,20 @@ const ProductCard = ({ product }) => {
   const previewImage = getPreviewImage();
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow">
+    <div className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow relative">
+      <div className="absolute z-10 p-2">
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={(e) => {
+            if (e.target.checked) {
+              setSelectedIds([...selectedIds, product.id]);
+            } else {
+              setSelectedIds(selectedIds.filter((id) => id !== product.id));
+            }
+          }}
+        />
+      </div>
       {/* Image de prévisualisation */}
       <div className="aspect-video bg-gray-100 relative">
         {previewImage ? (
@@ -509,12 +577,7 @@ const ProductCard = ({ product }) => {
             <Eye className="h-4 w-4" />
             Show
           </button>
-          <button className="flex items-center justify-center gap-1 px-3 py-2 text-sm bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors">
-            <Download className="h-4 w-4" />
-          </button>
-          <button className="flex items-center justify-center gap-1 px-3 py-2 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors">
-            <Trash2 className="h-4 w-4" />
-          </button>
+          
         </div>
       </div>
     </div>

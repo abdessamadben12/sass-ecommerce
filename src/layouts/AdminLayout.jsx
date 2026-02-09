@@ -8,14 +8,15 @@ import {
     User,
     UserCheck,
     Users,
-    Wallet
+    Wallet,
+    List
   } from "lucide-react";
 
 import { Outlet } from "react-router-dom";
 import { Header } from "../components/layout/header";
 import { Sidebare } from "../components/layout/sidebare";
 import { useEffect, useState } from "react";
-import { getNotification } from "../services/ServicesAdmin/ServicesDashbord";
+import { getNotificationsList } from "../services/ServicesAdmin/ServicesDashbord";
 
   
   // ——— Données placées hors du composant ———
@@ -44,23 +45,12 @@ import { getNotification } from "../services/ServicesAdmin/ServicesDashbord";
       {name:"All Orders", link:"/admin/all-orders"},
       {name:"All Transactions",link:"/admin/all-transactions"}
     ] },
-    { name: 'Deposits',icon: Wallet,    hasSubmenu: true, badge: true,
-      children:[
-        {name:"All Deposits", link:"/admin/all-deposit/"},
-        {name:"Pending Deposits", link:"/admin/pending-deposits"},
-        {name:"Completed Deposits", link:"/admin/completed-deposits"},
-        {name:"Cancelled Deposits", link:"/admin/cancelled-deposits"},
-      ]
-     },
-    { name: 'Withdrawals',hasSubmenu: true,icon: TrendingDown ,children:[
-      {name:"All Withdrawals", link:"/admin/all-withdrawals"},
-      {name:"Pending Withdrawals", link:"/admin/pending-withdrawals"},
-      {name:"Completed Withdrawals", link:"/admin/completed-withdrawals"},
-      {name:"Cancelled Withdrawals", link:"/admin/cancelled-withdrawals"},
-    ] },
+    { name: 'Deposits',icon: Wallet, link:"/admin/all-deposit/"},
+    { name: 'Withdrawals', icon: TrendingDown, link:"/admin/all-withdrawals"},
     { name: 'Support & communications',   icon: Mail, hasSubmenu: true,children:[
       {name: "Pending Tickets", link:"/admin/pending-tickets"},
       {name:"All Tickets", link:"/admin/all-tickets"},
+      {name:"Notifications", link:"/admin/notifications"},
     ]},
     { name: 'Report',icon: BarChart3,hasSubmenu: true,link:"report",children:[
       {name:"Product Report", link:"/admin/product-report"},
@@ -72,16 +62,24 @@ import { getNotification } from "../services/ServicesAdmin/ServicesDashbord";
     { name: 'Marketing et promotion',  icon: Users ,hasSubmenu: true, children:[
       {name:"Email Marketing", link:"/admin/email-marketing"},
       {name:"Promotions", link:"/admin/promotions"},
+      {name:"Coupons", link:"/admin/coupons"},
+      {name:"Campaigns", link:"/admin/campaigns"},
+      {name:"Referrals", link:"/admin/referrals"},
     ]},
     { name: 'Subscribers',      icon: UserCheck ,link:"subscribers"},
+    { name: 'Activity Logs',   icon: List, link:"/admin/activity-logs"},
     { name: 'System Setting',   icon: Settings ,link:"/admin/setting"},
+    { name: 'Admin Profile',   icon: User ,link:"/admin/profile"},
   ];
 export default function AdminLayout(){
   const [notifications,setNotificaion]=useState([])
+  const [unreadCount,setUnreadCount]=useState(0)
   useEffect(()=>{
     async function fetchData(){
-      const notifs=await getNotification()
-      setNotificaion(notifs)
+      const notifs=await getNotificationsList({ per_page: 6, status: "all" })
+      const items = notifs?.data || []
+      setNotificaion(items)
+      setUnreadCount(items.filter(n => n.is_read === false).length)
      
     }
     fetchData()
@@ -96,7 +94,7 @@ export default function AdminLayout(){
           {/* Header */}
           <Header
             notifications={notifications}
-            numberNotification={notifications?.length}
+            numberNotification={unreadCount}
           />
           <main className="-1  p-6 min-h-screen overflow-y-auto ">
             <Outlet/>

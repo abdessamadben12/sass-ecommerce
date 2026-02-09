@@ -5,12 +5,15 @@ import ActiveUser from "../roles/admin/manager-users/ActivUser";
 import PendingUser from "../roles/admin/manager-users/PendingUser";
 import BannedUser from "../roles/admin/manager-users/BannedUser";
 import DetaillUser from "../roles/admin/manager-users/Action/DetaillUser";
+import UserLogins from "../roles/admin/manager-users/Action/UserLogins";
+import UserNotifications from "../roles/admin/manager-users/Action/UserNotifications";
 import AllShop from "../roles/admin/Shops_Products/Shops/AllShops";
 import AllProduct from "../roles/admin/Shops_Products/Products/AllProducts";
 import ShopDetaill from "../roles/admin/Shops_Products/Shops/ShopDetaill";
 import AllDeposit from "../roles/admin/Diposit/AllDeposit";
 import DepositDetaill from "../roles/admin/Diposit/DepositDetaill";
 import AllWithdrawals from "../roles/admin/Withdrawals/AllWithdrawals";
+import WithdrawalDetaill from "../roles/admin/Withdrawals/WithdrawalDetaill";
 import AllOrders from "../roles/admin/Orders/AllOreders";
 import DetaillOrders from "../roles/admin/Orders/DetaillOrders";
 import DetaillOrder from "../roles/admin/Orders/DetaillOrders";
@@ -30,19 +33,43 @@ import AddCategory from "../roles/admin/Setting/categories/AddCategory";
 import EditCategory from "../roles/admin/Setting/categories/EditCategory";
 import ShopDetail from "../roles/admin/Shops_Products/Shops/ShopDetaill";
 import SendNotification from "../roles/admin/Notification/SendNotification";
+import EmailMarketing from "../roles/admin/Marketing/EmailMarketing";
+import Promotions from "../roles/admin/Marketing/Promotions";
+import Coupons from "../roles/admin/Marketing/Coupons";
+import Campaigns from "../roles/admin/Marketing/Campaigns";
+import Referrals from "../roles/admin/Marketing/Referrals";
+import ProductReport from "../roles/admin/Reports/ProductReport";
+import OrderReport from "../roles/admin/Reports/OrderReport";
+import UserReport from "../roles/admin/Reports/UserReport";
+import VisitorsReport from "../roles/admin/Reports/VisitorsReport";
+import TransactionReport from "../roles/admin/Reports/TransactionReport";
+import ActivityLogs from "../roles/admin/Logs/ActivityLogs";
+import AdminProfile from "../roles/admin/Profile/AdminProfile";
+import Notifications from "../roles/admin/Notification/Notifications";
+import Login from "../Auth/Login";
+import RequireAuth from "../Auth/RequireAuth";
+import ForgotPassword from "../Auth/ForgotPassword";
+import ResetPassword from "../Auth/ResetPassword";
+import Home from "../roles/public/Home";
 
 
 export default function  AppRouter(){
     return <Routes>
-      <Route path="admin/*" element ={<AdminLayout/> } > 
+      <Route path="/" element={<Home/>} />
+      <Route path="/login" element={<Login/>} />
+      <Route path="/forgot-password" element={<ForgotPassword/>} />
+      <Route path="/reset-password" element={<ResetPassword/>} />
+      <Route path="admin/*" element ={<RequireAuth><AdminLayout/></RequireAuth> } > 
        <Route  path="dashbord" element={<Dashboard/>}/>
       <Route  path="banned-user" element={<BannedUser />}/>
       <Route  path="email-unverefied" element={<PendingUser/>}/>
       <Route  path="active-user" element={<ActiveUser/>}/> 
       <Route  path="detaill-user/:id" element={<DetaillUser/>}/> 
+      <Route  path="detaill-user/login/:id" element={<UserLogins/>}/> 
+      <Route  path="detaill-user/notification/:id" element={<UserNotifications/>}/> 
       {/* products & Shops */}
       <Route  path="shops" element={<AllShop/>}/>
-      <Route path="shops-details/:id" element={<ShopDetail/>}/>"
+      <Route path="shops-details/:id" element={<ShopDetail/>}/>
 
      {/* product */}
      <Route path="products" element={<AllProduct/>}/>
@@ -53,6 +80,7 @@ export default function  AppRouter(){
      <Route path="detaill-deposit/:id" element={<DepositDetaill/>}/>
      {/* withdrawals */}
      <Route path="all-withdrawals" element={<AllWithdrawals/>}/>
+     <Route path="detaill-withdrawal/:id" element={<WithdrawalDetaill/>}/>
      {/* orders */}
       <Route path="all-orders" element={<AllOrders/>}/>
       <Route path="detaill-order/:id" element={<DetaillOrder/>}/>
@@ -63,7 +91,7 @@ export default function  AppRouter(){
       {/* categorie */}
       <Route path="all-categories" element={<AllCategory/>}/>
       <Route path="add-category" element={<AddCategory/>}/>
-      <Route path="edit-category/:id" element={<EditCategory/>}/>"
+      <Route path="edit-category/:id" element={<EditCategory/>}/>
       <Route path="all-templates" element={<AllTemplate/>}/>
       <Route path="templates-update/:id" element={<TemplateUpdateForm/>}/>
       <Route path="setting-create-templates" element={<TemplateCreator/>}/>
@@ -74,10 +102,25 @@ export default function  AppRouter(){
       <Route path="detaill-ticket/:id" element={<TicketDetail/>}/>
       {/* send notification */}
       <Route path="send-notification" element={<SendNotification/>}/>
+      {/* marketing */}
+      <Route path="email-marketing" element={<EmailMarketing/>}/>
+      <Route path="promotions" element={<Promotions/>}/>
+      <Route path="coupons" element={<Coupons/>}/>
+      <Route path="campaigns" element={<Campaigns/>}/>
+      <Route path="referrals" element={<Referrals/>}/>
+      {/* reports */}
+      <Route path="product-report" element={<ProductReport/>}/>
+      <Route path="order-report" element={<OrderReport/>}/>
+      <Route path="user-report" element={<UserReport/>}/>
+      <Route path="visitors-report" element={<VisitorsReport/>}/>
+      <Route path="transaction-report" element={<TransactionReport/>}/>
+      {/* logs */}
+      <Route path="activity-logs" element={<ActivityLogs/>}/>
+      {/* admin profile & notifications */}
+      <Route path="profile" element={<AdminProfile/>}/>
+      <Route path="notifications" element={<Notifications/>}/>
 
       </Route>
-      {/* admin profile */}
-      <Route path="/admin/profile" element={<DetaillUser/>}/>
       <Route path="/file-view" element={<FileViewer/>}/>
     </Routes>
 

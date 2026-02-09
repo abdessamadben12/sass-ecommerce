@@ -1,3 +1,4 @@
+import { axiosConfig } from "../ConfigueAxios";
 export const getTransaction = async (status, inputSearch, startDate, endDate, page, perPage, setError) => {
     return await axiosConfig.get("/admin/transactions", {
         params: {

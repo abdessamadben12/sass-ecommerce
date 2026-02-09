@@ -20,4 +20,23 @@ export const getChartTransaction=async(from=null,to=null)=>await axiosConfig.get
 export const FiltrerDepositWithdrawChartData=async(startDate,endDate)=>await axiosConfig.get(`/admin/DepositWithdrawChartData/${startDate}/${endDate}`).then(res=>res)
 .catch(err=>console.log(err.message))
 
-export const getNotification=async()=>await axiosConfig.get("/admin/notifications").then(res=>res.data).catch(err=>console.log(err))
+export const getNotification=async()=>await axiosConfig.get("/admin/notifications", { params: { per_page: 50 } })
+  .then(res=>res.data?.data || res.data)
+  .catch(err=>console.log(err))
+
+export const getNotificationsList = async (params) =>
+  axiosConfig.get("/admin/notifications", { params })
+    .then(res => res.data)
+    .catch(err => console.log(err))
+
+export const getNotificationDetail = async (id) =>
+  axiosConfig.get(`/admin/notifications/${id}`).then(res => res.data)
+
+export const markNotificationRead = async (id) =>
+  axiosConfig.put(`/admin/notifications/${id}/read`).then(res => res.data)
+
+export const markAllNotificationsRead = async () =>
+  axiosConfig.put(`/admin/notifications/read-all`).then(res => res.data)
+
+export const createAdminUser = async (payload) =>
+  axiosConfig.post("/admin/users/create-admin", payload).then(res => res.data)
