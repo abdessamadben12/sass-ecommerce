@@ -1,105 +1,131 @@
 import * as LucideIcons from 'lucide-react';
-import Card from "../../../components/ui/card";
-import CardDeposit from "../../../components/ui/CardDeposit";
-import {getAnnalyseUser,getDepositAnnalyse,getViewGlobal,getWithdrawls,getDepositWithdrawChartData, getNotification} from "../../../services/ServicesAdmin/ServicesDashbord"
-import {  useEffect, useState } from "react";
-
+import { useEffect, useState } from 'react';
+import Card from '../../../components/ui/card';
+import CardDeposit from '../../../components/ui/CardDeposit';
+import { getDashboardOverview } from '../../../services/ServicesAdmin/ServicesDashbord';
+import { getCsrfToken } from '../../../services/ConfigueAxios';
+import TransactionsReport from '../../../components/ui/charts/TransactionsChart';
+import TopProductsDashboardCharts from '../../../components/ui/charts/TopProductsDashboardCharts';
+import Loading from '../../../components/ui/loading';
+import NotifyError from '../../../components/ui/NotifyError';
 
 const IconRenderer = ({ iconName, size = 24, color = 'black' }) => {
-    const LucideIcon = LucideIcons[iconName]; // récupère l'icône dynamiquement
-  
-    if (!LucideIcon) return <span>Icône inconnue: {iconName}</span>;
-  
-    return <LucideIcon size={size} color={color} />;
-  };
+  const LucideIcon = LucideIcons[iconName];
+  if (!LucideIcon) return <span>Icone inconnue: {iconName}</span>;
+  return <LucideIcon size={size} color={color} />;
+};
 
+export default function Dashboard() {
+  const [userInfo, setUserInfo] = useState([]);
+  const [deposit, setDeposit] = useState([]);
+  const [withdrawal, setWithdrawal] = useState([]);
+  const [viewGlobal, setViewGlobal] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-import { getCsrfTocken } from "../../../services/ConfigueAxios";
-import TransactionsReport from '../../../components/ui/charts/TransactionsChart';
-import Loading from '../../../components/ui/loading';
-  export default function Dashboard() {
-    const [userInfo,setUserInfo]=useState([])
-    const [deposit,setDeposit]=useState([])
-    const [Withdrawal,setWithdrawal]=useState([])
-    const [viewGlobal,setViewGlobal]=useState([])
-    const [depositWithdrawalChart,setDepositWithdrawalChart]=useState([])
-    const [notificaion,setNotificaion]=useState([])
-    const [loading,setLoading]=useState(false)
-    
-    useEffect(()=>{
-       const fetchData=async()=>{
-        setLoading(true)
-        await getCsrfTocken()
-       
-        const users= await getAnnalyseUser()
-        const deposits=await getDepositAnnalyse()
-        const Withdrawals=await getWithdrawls()
-        const viewGlobals=await getViewGlobal()
-        const DepositWithdrawal=await getDepositWithdrawChartData()
-        const notifs=await getNotification()
-        setUserInfo(users)
-        setDeposit(deposits)
-        setWithdrawal(Withdrawals)
-        setViewGlobal(viewGlobals)
-        setDepositWithdrawalChart(DepositWithdrawal)
-      
-        setLoading(false)
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        await getCsrfToken();
+        const overview = await getDashboardOverview();
+        setUserInfo(overview?.users || []);
+        setDeposit(overview?.deposits || []);
+        setWithdrawal(overview?.withdrawals || []);
+        setViewGlobal(overview?.global || []);
+      } catch (err) {
+        setError(err?.response?.data?.message || err?.message || 'Failed to load dashboard overview.');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-       }
-       fetchData()
-    },[])
-   
-    return (
-        <>
-    {loading ?<Loading/> :<div>
+    fetchData();
+  }, []);
+
+  if (loading) return <Loading />;
+
+  return (
+    <>
+      <div className="space-y-6">
         <div>
-             <h1 className="text-xl font-bold text-gray-600 mb-5">Dashboard</h1>
-        </div>
-        <div className="w-full">
-            <div className="grid grid-cols-2 gap-5 ">
-                {userInfo?.map((user,key)=><Card key={key} title={user.title}
-                 value={user.value} icon={<IconRenderer iconName={user.icon} size={30} color={user.colorIcon}
-                    />} bgColor={user.bgColor} 
-                 borderColor={user.borderColor}
-                 />)}
-            </div>
-        </div>
-        {/* deposit */}
-        <div className="bg-white shadow-md mt-10 w-full  ">
-        <h1 className="text-gray-400 m-4 text-xl font-bold">Deposit</h1>
-        <div className="grid grid-cols-2 ">
-            {deposit?.map((item,key)=><CardDeposit key={key} title={item.title} bgColor={item.bgColor}
-                 value={item.value} icon={<IconRenderer size={30} iconName={item.icon} color={item.iconColor}/>} 
-                 />)}
-        </div>
-        </div>
-    {/* Withdrawals */}
-    <div className="bg-white shadow-md mt-10 w-full  ">
-        <h1 className="text-gray-400 m-4 text-xl font-bold">Withdrawals</h1>
-        <div className="grid grid-cols-2 ">
-            {Withdrawal.map((item,key)=><CardDeposit key={key} title={item.title}
-                 value={item.value} icon={<IconRenderer iconName={item.icon} color={item.iconColor} size={30}/>} 
-                 bgColor={item.bgColor} />)}
-        </div>
-        </div>
-        {/* view global les shopa and prouduct  */}
-        <div className="bg-white shadow-md mt-10 w-full  ">
-        <div className="grid grid-cols-2 ">
-            {viewGlobal.map((item,key)=><CardDeposit key={key} title={item.title}
-                 value={item.value} icon={<IconRenderer iconName={item.icon}  color={item.colorIcon} size={30}/>} 
-                 bgColor={item.bgColor} />)}
-        </div>
+          <h1 className="text-2xl font-bold text-slate-700">Dashboard</h1>
+          <p className="text-sm text-slate-500">Overview of marketplace performance and activity.</p>
         </div>
 
-        {/* charts */}
-        {/* <DashboardReports/>
-        <TopProductsChart/> */}
-        <div className='grid grid-cols-1 mt-10 gap-2'>
-             <TransactionsReport/>
-        </div>
-     </div>}
-     
-     </>
-    );
-  }
-  
+        <section className="space-y-3">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-slate-500">User Analytics</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+            {userInfo?.map((user, key) => (
+              <Card
+                key={key}
+                title={user.title}
+                value={user.value}
+                icon={<IconRenderer iconName={user.icon} size={28} color={user.colorIcon} />}
+                bgColor={user.bgColor}
+                borderColor={user.borderColor}
+              />
+            ))}
+          </div>
+        </section>
+
+        <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-3">Deposit</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {deposit?.map((item, key) => (
+                <CardDeposit
+                  key={key}
+                  title={item.title}
+                  bgColor={item.bgColor}
+                  value={item.value}
+                  icon={<IconRenderer size={28} iconName={item.icon} color={item.iconColor} />}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-3">Withdrawals</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {withdrawal?.map((item, key) => (
+                <CardDeposit
+                  key={key}
+                  title={item.title}
+                  value={item.value}
+                  icon={<IconRenderer iconName={item.icon} color={item.iconColor} size={28} />}
+                  bgColor={item.bgColor}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-3">Global KPIs</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+            {viewGlobal?.map((item, key) => (
+              <CardDeposit
+                key={key}
+                title={item.title}
+                value={item.value}
+                icon={<IconRenderer iconName={item.icon} color={item.colorIcon} size={28} />}
+                bgColor={item.bgColor}
+              />
+            ))}
+          </div>
+        </section>
+
+        <section>
+          <TransactionsReport />
+        </section>
+
+        <section>
+          <TopProductsDashboardCharts />
+        </section>
+      </div>
+
+      <NotifyError message={error} onClose={() => setError(null)} isVisible={!!error} />
+    </>
+  );
+}

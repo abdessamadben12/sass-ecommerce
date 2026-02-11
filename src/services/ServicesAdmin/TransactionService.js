@@ -14,3 +14,11 @@ export const getTransaction = async (status, inputSearch, startDate, endDate, pa
         setError(err.message);
     });
 }
+
+export const getTransactionById = async (id, setError) => {
+    return await axiosConfig.get(`/admin/transactions/${id}`)
+        .then(res => res.data)
+        .catch(err => {
+            setError(err.response?.data?.message || err.message);
+        });
+}

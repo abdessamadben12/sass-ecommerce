@@ -3,38 +3,39 @@ import DynamicTable from '../../../components/ui/DynamicTable';
 import InputSearch from '../../../components/ui/InputSearch';
 import DateRangePicker from '../../../components/ui/DateRangePicker';
 import { DepositService } from '../../../services/ServicesAdmin/DepositService';
+import { useAppSettings } from '../../../context/AppSettingsContext';
 import NotifyError from '../../../components/ui/NotifyError';
 import Pagination from '../../../components/ui/pagination';
 import Loading from '../../../components/ui/loading';
-const DepositColumns = [
+const getDepositColumns = (formatCurrency) => [
   { key: "gateway", label: "Gateway | Transaction" ,
     render:(deposit) => `${deposit.payment_method ?? "--"} / ${deposit.transaction_id ?? "--"}`
   },
     {
     key:"user",
     label:"name",
-    render:deposit=>deposit.user.name
+    render:deposit=>deposit?.user?.name ?? "--"
   },
   {
     key: "trx",
     label: "Trx",
-    render: (deposit) => `${deposit.transaction_id ?? "--"}`,
+    render: (deposit) => `${deposit?.transaction_id ?? "--"}`,
   },
   {
     key: "created_at",
     label: "Initiated",
-    render: (deposit) => deposit.created_at.split("T")[0] ?? "--",
+    render: (deposit) => deposit?.created_at?.split("T")[0] ?? "--",
   },
 
    {
     key:"Conversion",
     label:" Conversion",
-    render: (deposit) => deposit.notes  ?? "--",
+    render: (deposit) => deposit?.notes  ?? "--",
   },
   {
     key: "amount",
     label: "Amount",
-    render: (deposit) => `${deposit.amount} $`,
+    render: (deposit) => formatCurrency(deposit?.amount ?? 0),
   },
 
   {
@@ -51,6 +52,8 @@ const DepositColumns = [
   },
 ];
 export default function AllDeposit() {
+  const { formatCurrency } = useAppSettings();
+  const DepositColumns = getDepositColumns(formatCurrency);
   const [inputSerch, setInputSearch] = useState("");
   const [selectedPeriod, setSelectedPeriod] = useState(null);
   const [status, setStatus] = useState("all");
@@ -72,15 +75,22 @@ export default function AllDeposit() {
       setLoading(true);
       const statusParam = status === "all" ? null : status;
       const data = await DepositService(statusParam, inputSerch, selectedPeriod?.start, selectedPeriod?.end, currentPage, perPage, setError);
-      setDataDeposit(data.data);
-      setTotalPages(data.last_page);
-      setCurrentPage(data.current_page);
-      setPerPage(data.per_page);
+      setDataDeposit(data?.data);
+      setTotalPages(data?.last_page);
+      setCurrentPage(data?.current_page);
+      setPerPage(data?.per_page);
     } catch (error) {
       console.error("Error fetching deposits:", error);
     } finally {
       setLoading(false);
     }
+  };
+  const handleReset = async () => {
+    setInputSearch("");
+    setSelectedPeriod(null);
+    setStatus("all");
+    setCurrentPage(1);
+    await handleSearch();
   };
   useEffect(() => {
     handleSearch();
@@ -110,6 +120,12 @@ export default function AllDeposit() {
                       <option value="confirmed">Confirmed</option>
                       <option value="rejected">Rejected</option>
                     </select>
+                    <button
+                      className="border rounded px-3 py-2 text-sm bg-slate-100 hover:bg-slate-200"
+                      onClick={handleReset}
+                    >
+                      Default
+                    </button>
                 </div>
             <DynamicTable
               data={dataDeposit}
@@ -124,3 +140,4 @@ export default function AllDeposit() {
     </div>
   )
 }
+

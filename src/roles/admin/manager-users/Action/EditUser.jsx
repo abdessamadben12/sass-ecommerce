@@ -7,6 +7,7 @@ export default function UserEdit({ user, onSubmit, loading }) {
     email: false,
     twoFA: false,
   });
+  const [statusValue, setStatusValue] = useState("active");
 
   useEffect(() => {
     if (user) {
@@ -15,6 +16,7 @@ export default function UserEdit({ user, onSubmit, loading }) {
         email: Boolean(user?.verfied_email),
         twoFA: Boolean(user?.twoFA),
       });
+      setStatusValue(user?.status || "active");
     }
   }, [user]);
 
@@ -37,7 +39,8 @@ export default function UserEdit({ user, onSubmit, loading }) {
     const data = {
       ...formData,
       verified_email: verificationStatus.email,
-      twoFA: verificationStatus.twoFA
+      twoFA: verificationStatus.twoFA,
+      status: statusValue,
     };
     onSubmit(data);
     // On peut optionnellement faire setIsEditing(false) ici après le succès
@@ -65,6 +68,19 @@ export default function UserEdit({ user, onSubmit, loading }) {
             <p className="text-sm text-gray-500">
               {isEditing ? "Mode édition activé" : "Consultez les informations de l'utilisateur"}
             </p>
+            <div className="mt-3">
+              <span
+                className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
+                  statusValue === "active"
+                    ? "bg-green-50 text-green-700 border border-green-200"
+                    : statusValue === "pending"
+                    ? "bg-yellow-50 text-yellow-700 border border-yellow-200"
+                    : "bg-red-50 text-red-700 border border-red-200"
+                }`}
+              >
+                Status: {statusValue}
+              </span>
+            </div>
           </div>
           
           {!isEditing && (
@@ -208,6 +224,7 @@ export default function UserEdit({ user, onSubmit, loading }) {
           </div>
 
           {/* Section Boutons de validation (visible uniquement en mode édition) */}
+
           {isEditing && (
             <div className="pt-6 border-t border-gray-100 flex items-center space-x-4">
               <button
@@ -234,3 +251,4 @@ export default function UserEdit({ user, onSubmit, loading }) {
     </div>
   );
 }
+

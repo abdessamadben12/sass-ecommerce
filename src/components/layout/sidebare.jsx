@@ -1,127 +1,117 @@
-import { ChevronDown, KeyRound, Menu, X } from "lucide-react";
+import { ChevronDown, Menu, X } from "lucide-react";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
-export function Sidebare({ items }) {
-  const [active, setActiveSection] = useState(null);
+export function Sidebare({ items, logoUrl, appName }) {
+  const [activeSubmenu, setActiveSubmenu] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
+  const location = useLocation();
 
   return (
-    <div className="flex h-screen bg-gray-50 relative">
-      {/* Bouton mobile */}
+    <>
+      {/* Mobile Toggle */}
       <button
-        className="absolute top-4 left-4 z-50 text-indigo-900 lg:hidden"
+        className="lg:hidden fixed top-5 left-5 z-[60] p-2 bg-white shadow-md rounded-lg"
         onClick={() => setIsOpen(!isOpen)}
       >
-        {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        {isOpen ? <X /> : <Menu />}
       </button>
-      {/* Overlay mobile */}
+
+      {/* Sidebar Overlay */}
       {isOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+        <div 
+          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden"
           onClick={() => setIsOpen(false)}
         />
       )}
-      {/* Sidebar */}
+
+      {/* Main Sidebar */}
       <aside
         className={`
-          fixed inset-y-0 left-0 w-64 bg-indigo-900 text-white shadow-xl
+          fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-gray-50
           transform transition-transform duration-300 ease-in-out
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
-          lg:translate-x-0 lg:static
-          flex flex-col   
-          h-screen        
-          z-50
+          lg:translate-x-0 lg:static flex flex-col h-screen
         `}
       >
-        {/* — Logo / Brand — */}
-        <div className="p-6 flex items-center space-x-3">
-          <div className="w-8 h-8 bg-cyan-400 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold">W</span>
-          </div>
-          <span className="text-xl font-bold">WIN GLOBAL</span>
+        {/* — Logo — */}
+        <div className="px-10 py-10 flex items-center gap-3">
+          {logoUrl ? (
+            <img src={logoUrl} alt={appName || "logo"} className="h-10 w-10 object-contain" />
+          ) : null}
+          
         </div>
 
-        {/* — Navigation (scrollable) — */}
-        <nav className="flex-1 overflow-y-auto">
-          {items.map((item, idx) => (
-            <div key={idx}>
-              {item.link ? <Link
-                to={item.link}                 
-                className={`
-                  flex items-center justify-between px-6 py-3
-                  hover:bg-indigo-800 cursor-pointer transition-colors
-                  ${active === item.name ? "bg-indigo-800 border-r-4 border-cyan-400" : ""}
-                `}
-                onClick={() =>
-                  setActiveSection(active === item.name ? null : item.name)
-                }
-              >
-                <div className="flex items-center space-x-3">
-                  <item.icon className="w-5 h-5" />
-                  <span className="text-sm">{item.name}</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  {item.badge && <div className="w-2 h-2 bg-orange-400 rounded-full" />}
-                  {item.hasSubmenu && (
-                    <ChevronDown
-                      className={`
-                        w-4 h-4 transform transition-transform duration-300
-                        ${active === item.name ? "rotate-180" : ""}
-                      `}
-                    />
-                  )}
-                </div>
-              </Link> :  <div          
-                className={`
-                  flex items-center justify-between px-6 py-3
-                  hover:bg-indigo-800 cursor-pointer transition-colors
-                  ${active === item.name ? "bg-indigo-800 border-r-4 border-cyan-400" : ""}
-                `}
-                onClick={() =>
-                  setActiveSection(active === item.name ? null : item.name)
-                }
-              >
-                <div className="flex items-center space-x-3">
-                  <item.icon className="w-5 h-5" />
-                  <span className="text-sm">{item.name}</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  {item.badge && <div className="w-2 h-2 bg-orange-400 rounded-full" />}
-                  {item.hasSubmenu && (
-                    <ChevronDown
-                      className={`
-                        w-4 h-4 transform transition-transform duration-300
-                        ${active === item.name ? "rotate-180" : ""}
-                      `}
-                    />
-                  )}
-                </div>
-              </div>}
-              
+        {/* — Navigation — */}
+        <nav className="flex-1 px-6 space-y-2 overflow-y-auto custom-scrollbar">
+          {items.map((item, idx) => {
+            // On vérifie si l'item est actif (via le lien ou si le sous-menu est ouvert)
+            const isActive = location.pathname === item.link || activeSubmenu === item.name;
 
-              {item.children && active === item.name && (
-                <div className="ml-12   space-y-1 transition-all duration-300">
-                  {item.children.map((child, i) => (
-                    <div
-                      key={i}
-                      className="text-sm text-indigo-200 hover:text-white cursor-pointer flex  items-center gap-2 p-2 mt-2"
-                    >
-                      
-                      {<Link to={child.link}>{child.name}</Link>}
-                    </div>
-                  ))}
+            const NavItemContent = (
+              <div
+                onClick={() => item.hasSubmenu && setActiveSubmenu(activeSubmenu === item.name ? null : item.name)}
+                className={`
+                  flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all duration-200
+                  ${isActive 
+                    ? "bg-[#0ea5e9] text-white shadow-lg shadow-blue-200" 
+                    : "text-slate-400 hover:text-slate-600 hover:bg-gray-50"}
+                  cursor-pointer group
+                `}
+              >
+                <div className="flex items-center space-x-4">
+                  <item.icon size={22} strokeWidth={isActive ? 2.5 : 1.5} />
+                  <span className={`text-[15px] font-medium ${isActive ? "text-white" : "text-slate-500"}`}>
+                    {item.name}
+                  </span>
                 </div>
-              )}
-            </div>
-          ))}
+                
+                {item.hasSubmenu && (
+                  <ChevronDown
+                    size={18}
+                    className={`transition-transform duration-300 ${activeSubmenu === item.name ? "rotate-180" : ""}`}
+                  />
+                )}
+              </div>
+            );
+
+            return (
+              <div key={idx} className="pb-1">
+                {item.link && !item.hasSubmenu ? (
+                  <Link to={item.link} onClick={() => setIsOpen(false)}>
+                    {NavItemContent}
+                  </Link>
+                ) : (
+                  NavItemContent
+                )}
+
+                {/* Submenu rendering */}
+                {item.children && activeSubmenu === item.name && (
+                  <div className="mt-2 ml-12 space-y-2 animate-in fade-in slide-in-from-top-1">
+                    {item.children.map((child, i) => (
+                      <Link
+                        key={i}
+                        to={child.link}
+                        onClick={() => setIsOpen(false)}
+                        className="block py-2 text-sm text-slate-500 hover:text-[#0ea5e9] transition-colors"
+                      >
+                        {child.name}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </nav>
 
-        {/* — Footer version (toujours en bas) — */}
-        <div className="px-6 py-4 text-xs text-indigo-300 mt-auto">
-          REALVEST V2.1.1
+        {/* — Footer — */}
+        <div className="px-10 py-8">
+          <p className="text-[11px] font-bold text-slate-300 tracking-[0.1em] uppercase">
+            Realvest v2.1.1
+          </p>
         </div>
       </aside>
-    </div>
+    </>
   );
 }

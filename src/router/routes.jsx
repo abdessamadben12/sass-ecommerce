@@ -17,9 +17,10 @@ import WithdrawalDetaill from "../roles/admin/Withdrawals/WithdrawalDetaill";
 import AllOrders from "../roles/admin/Orders/AllOreders";
 import DetaillOrders from "../roles/admin/Orders/DetaillOrders";
 import DetaillOrder from "../roles/admin/Orders/DetaillOrders";
-import Setting from "../roles/admin/Setting/Setting";
+import GeneralSetting from "../roles/admin/Setting/GeneralSetting";
 import ProductDetaill from "../roles/admin/Shops_Products/Products/productDetaill";
 import {AllTransaction} from "../roles/admin/Transaction/AllTransaction";
+import DetailTransaction from "../roles/admin/Transaction/DetailTransaction";
 import AllTickets from "../roles/admin/support/ListTickets";
 import ReplyTicket from "../roles/admin/support/ReplyTicket";
 import TicketDetail from "../roles/admin/support/TicketDetaill";
@@ -38,11 +39,13 @@ import Promotions from "../roles/admin/Marketing/Promotions";
 import Coupons from "../roles/admin/Marketing/Coupons";
 import Campaigns from "../roles/admin/Marketing/Campaigns";
 import Referrals from "../roles/admin/Marketing/Referrals";
+import Subscribers from "../roles/admin/Marketing/Subscribers";
 import ProductReport from "../roles/admin/Reports/ProductReport";
 import OrderReport from "../roles/admin/Reports/OrderReport";
 import UserReport from "../roles/admin/Reports/UserReport";
 import VisitorsReport from "../roles/admin/Reports/VisitorsReport";
 import TransactionReport from "../roles/admin/Reports/TransactionReport";
+import TopProductsReport from "../roles/admin/Reports/TopProductsReport";
 import ActivityLogs from "../roles/admin/Logs/ActivityLogs";
 import AdminProfile from "../roles/admin/Profile/AdminProfile";
 import Notifications from "../roles/admin/Notification/Notifications";
@@ -55,7 +58,7 @@ import Home from "../roles/public/Home";
 
 export default function  AppRouter(){
     return <Routes>
-      <Route path="/" element={<Home/>} />
+      
       <Route path="/login" element={<Login/>} />
       <Route path="/forgot-password" element={<ForgotPassword/>} />
       <Route path="/reset-password" element={<ResetPassword/>} />
@@ -86,8 +89,9 @@ export default function  AppRouter(){
       <Route path="detaill-order/:id" element={<DetaillOrder/>}/>
       {/* transactions */}
       <Route path="all-transactions" element={<AllTransaction/>}/>
+      <Route path="detaill-transaction/:id" element={<DetailTransaction/>}/>
       {/* settings */}
-      <Route path="setting" element={<Setting/>}/>
+      <Route path="setting" element={<GeneralSetting/>}/>
       {/* categorie */}
       <Route path="all-categories" element={<AllCategory/>}/>
       <Route path="add-category" element={<AddCategory/>}/>
@@ -108,12 +112,14 @@ export default function  AppRouter(){
       <Route path="coupons" element={<Coupons/>}/>
       <Route path="campaigns" element={<Campaigns/>}/>
       <Route path="referrals" element={<Referrals/>}/>
+      <Route path="subscribers" element={<Subscribers/>}/>
       {/* reports */}
       <Route path="product-report" element={<ProductReport/>}/>
       <Route path="order-report" element={<OrderReport/>}/>
       <Route path="user-report" element={<UserReport/>}/>
       <Route path="visitors-report" element={<VisitorsReport/>}/>
       <Route path="transaction-report" element={<TransactionReport/>}/>
+      <Route path="top-products-report" element={<TopProductsReport/>}/>
       {/* logs */}
       <Route path="activity-logs" element={<ActivityLogs/>}/>
       {/* admin profile & notifications */}

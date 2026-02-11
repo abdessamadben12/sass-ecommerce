@@ -78,35 +78,35 @@ export default function DepositDetaill() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
           <div>
             <span className="text-gray-500">User:</span>{" "}
-            <span className="font-medium">{deposit.user?.name}</span>
+            <span className="font-medium">{deposit?.user?.name ?? "--"}</span>
           </div>
           <div>
             <span className="text-gray-500">Email:</span>{" "}
-            <span className="font-medium">{deposit.user?.email}</span>
+            <span className="font-medium">{deposit?.user?.email ?? "--"}</span>
           </div>
           <div>
             <span className="text-gray-500">Amount:</span>{" "}
-            <span className="font-medium">{deposit.amount}</span>
+            <span className="font-medium">{deposit?.amount}</span>
           </div>
           <div>
             <span className="text-gray-500">Method:</span>{" "}
-            <span className="font-medium">{deposit.payment_method}</span>
+            <span className="font-medium">{deposit?.payment_method}</span>
           </div>
           <div>
             <span className="text-gray-500">Transaction:</span>{" "}
-            <span className="font-medium">{deposit.transaction_id || "-"}</span>
+            <span className="font-medium">{deposit?.transaction_id || "-"}</span>
           </div>
           <div>
             <span className="text-gray-500">Status:</span>{" "}
-            <span className="font-medium">{deposit.status}</span>
+            <span className="font-medium">{deposit?.status}</span>
           </div>
           <div>
             <span className="text-gray-500">Created:</span>{" "}
-            <span className="font-medium">{deposit.created_at}</span>
+            <span className="font-medium">{deposit?.created_at}</span>
           </div>
           <div>
             <span className="text-gray-500">Notes:</span>{" "}
-            <span className="font-medium">{deposit.notes || "-"}</span>
+            <span className="font-medium">{deposit?.notes || "-"}</span>
           </div>
         </div>
       </div>
@@ -126,14 +126,14 @@ export default function DepositDetaill() {
             <button
               className="px-4 py-2 rounded bg-green-600 text-white"
               onClick={handleApprove}
-              disabled={deposit.status !== "pending"}
+              disabled={deposit?.status !== "pending"}
             >
               Confirmer
             </button>
             <button
               className="px-4 py-2 rounded bg-red-600 text-white"
               onClick={handleReject}
-              disabled={deposit.status !== "pending"}
+              disabled={deposit?.status !== "pending"}
             >
               Rejeter
             </button>

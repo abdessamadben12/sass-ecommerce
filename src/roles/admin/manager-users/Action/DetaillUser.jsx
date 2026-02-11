@@ -63,7 +63,7 @@ export default function DetaillUser() {
     { title: "Sub Balance", icon: <MinusCircle size={20} />, bgColor: "bg-red-500", action: () => setShowRemoveBalance(true) },
     { title: "Logins", icon: <List size={20} />, bgColor: "bg-blue-600", action: () => navigate("/admin/detaill-user/login/" + data.user?.id) },
     { title: "Notifications", icon: <Bell size={20} />, bgColor: "bg-slate-600", action: () => navigate("/admin/detaill-user/notification/" + data.user?.id) },
-    { title: "Ban User", icon: <Ban size={20} />, bgColor: "bg-orange-600", action: () => console.log("Ban clicked") },
+    { title: data?.user?.status === "inactive" ? "Unban User" : "Ban User", icon: <Ban size={20} />, bgColor: data?.user?.status === "inactive" ? "bg-emerald-600" : "bg-orange-600", action: () => handleBanToggle() },
   ];
 
   async function handleBalanceAdd(param) {
@@ -82,6 +82,22 @@ export default function DetaillUser() {
   async function handleUpdate(dataUser) {
     setLoading(true);
     await updateUser(dataUser, data.user.id, setSucess, setError);
+    const response = await getUserById(id, setError);
+    setData(response);
+    setLoading(false);
+  }
+
+  async function handleBanToggle() {
+    if (!data?.user) return;
+    const nextStatus = data.user.status === "inactive" ? "active" : "inactive";
+    const payload = {
+      ...data.user,
+      status: nextStatus,
+      verified_email: Boolean(data.user?.verfied_email),
+      twoFA: Boolean(data.user?.twoFA),
+    };
+    setLoading(true);
+    await updateUser(payload, data.user.id, setSucess, setError);
     const response = await getUserById(id, setError);
     setData(response);
     setLoading(false);

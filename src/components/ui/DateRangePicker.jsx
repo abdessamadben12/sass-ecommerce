@@ -50,7 +50,7 @@ const DateRangePicker = ({ strokePeriods, searchCallback, NotIcon, onChange }) =
 
   const handleCalendarApply = ({ start, end }) => {
     setSelectedPeriod({ type: "custom", value: [start, end] });
-    strokePeriods(formatDate(start), formatDate(end));
+    strokePeriods(start, end);
     console.log("handleCalendarApply")
     console.log(start, end)
     onChange && onChange({ start, end });
@@ -85,7 +85,7 @@ const DateRangePicker = ({ strokePeriods, searchCallback, NotIcon, onChange }) =
           {!NotIcon && (
             <SearchIcon onClick={() => {
               searchCallback(selectedPeriod);
-            }} className="w-10 h-full p-2 cursor-pointer bg-blue-800 text-white rounded-r-lg" />
+            }} className="w-10 h-full p-2 cursor-pointer bg-[#008ECC] text-white rounded-r-lg" />
           )}
         </div>
 
@@ -102,7 +102,7 @@ const DateRangePicker = ({ strokePeriods, searchCallback, NotIcon, onChange }) =
                     setShowList(false);
                     setShowCalendar(false);
                   }}
-                  className="px-4 py-2 hover:bg-blue-600 hover:text-white cursor-pointer"
+                  className="px-4 py-2 hover:bg-[#008ECC] hover:text-white cursor-pointer"
                 >
                   {option.name}
                 </li>
@@ -112,7 +112,7 @@ const DateRangePicker = ({ strokePeriods, searchCallback, NotIcon, onChange }) =
                   setShowCalendar(true);
                   setShowList(false);
                 }}
-                className="px-4 py-2 hover:bg-blue-600 hover:text-white cursor-pointer"
+                className="px-4 py-2 hover:bg-[#008ECC] hover:text-white cursor-pointer"
               >
                 Custom range...
               </li>

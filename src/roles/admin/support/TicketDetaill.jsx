@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { 
   ArrowLeft,
   User,
@@ -20,7 +20,8 @@ import {
 } from 'lucide-react';
 import ReplyTicket from './ReplyTicket';
 import { deleteMessage, deleteTicket, getTicketById, UpdateTicket } from '../../../services/ServicesAdmin/TicketService';
-import { data, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import { axiosConfig } from '../../../services/ConfigueAxios';
 import Loading from '../../../components/ui/loading';
 import CardConfirmation from '../../../components/ui/CardConfirmation';
 import NotifyError from '../../../components/ui/NotifyError';
@@ -36,8 +37,8 @@ const TicketDetail = () => {
   const [updating,setUpdating]=useState(false)
   const [isAjouter,setAjouter]=useState(false)
   const [deleted,setDeleted]=useState(false)
-  const status=useRef()
-  const priority=useRef()
+  const [statusValue, setStatusValue] = useState('new')
+  const [priorityValue, setPriorityValue] = useState('medium')
   const {id}=useParams()
   const navigate = useNavigate();
 
@@ -46,6 +47,8 @@ const TicketDetail = () => {
         setLoading(true);
         const data =await getTicketById(id,setError)
         setTickets(data)
+        if (data?.status) setStatusValue(data.status)
+        if (data?.priority) setPriorityValue(data.priority)
         setLoading(false);
     }
         fetchTicket()
@@ -53,8 +56,9 @@ const TicketDetail = () => {
   const getStatusColor = (status) => {
     const colors = {
       'new': 'bg-blue-100 text-blue-800 border-blue-200',
+      'assigned': 'bg-indigo-100 text-indigo-800 border-indigo-200',
       'in_progress': 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      'waiting': 'bg-orange-100 text-orange-800 border-orange-200',
+      'pending': 'bg-orange-100 text-orange-800 border-orange-200',
       'resolved': 'bg-green-100 text-green-800 border-green-200',
       'closed': 'bg-gray-100 text-gray-800 border-gray-200',
     };
@@ -73,17 +77,16 @@ const TicketDetail = () => {
 
   const getTypeIcon = (type) => {
      const icons = {
-      'support': 	<LifeBuoy className="w-5 h-5 text-blue-500" />,
-      'feature': <Sparkles className="w-5 h-5 text-yellow-500" />,
+      'support': <LifeBuoy className="w-5 h-5 text-blue-500" />,
+      'feature_request': <Sparkles className="w-5 h-5 text-yellow-500" />,
       'report': <FileWarning className="w-5 h-5 text-red-500" />
     };
-    if(type) return icons[type] || '📋';
-    else return '📋'
-   
-   
+    if(type) return icons[type] || <FileText className="w-5 h-5 text-gray-500" />;
+    else return <FileText className="w-5 h-5 text-gray-500" />
   };
 
   const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
     const date = new Date(dateString);
     return date.toLocaleString('en-US', {
       month: 'short',
@@ -100,29 +103,46 @@ const TicketDetail = () => {
     }
     return <FileText className="w-4 h-4 text-gray-600" />;
   };
+  const getAttachmentUrl = (attachment) => {
+    return attachment?.url || attachment?.path || '';
+  };
+  const apiBase = axiosConfig?.defaults?.baseURL?.replace(/\/api$/, '') || 'http://localhost:8000';
   const handleDelete=async()=>{
-   await deleteTicket(id,setError,setSucess)
-   setSupprimer(false)
-   setTimeout(()=>{
-    navigate('/admin/all-tickets')
-   },2000)
+    try {
+      await deleteTicket(id,setError,setSucess)
+      setSupprimer(false)
+      setTimeout(()=>{
+        navigate('/admin/all-tickets')
+      },2000)
+    } catch (_) {
+      // error already handled in service
+    }
   }
   const handleUpate=async(e)=>{
     e.preventDefault()
-   const dataForm={
-    status:status.current.value,
-    priority:priority.current.value
-   }
+    const dataForm={
+      status: statusValue,
+      priority: priorityValue
+    }
     setUpdating(true);
-    await UpdateTicket(dataForm,id,setError,setSucess)
-    setUpdating(false);
-    const data =await getTicketById(id,setError)
-        setTickets(data)
+    try {
+      await UpdateTicket(dataForm,id,setError,setSucess)
+      const data = await getTicketById(id,setError)
+      setTickets(data)
+    } catch (_) {
+      // error already handled in service
+    } finally {
+      setUpdating(false);
+    }
     
   }
   const deleteReply = async (id) => {
-    await deleteMessage(id,setError,setSucess)
-    setDeleted(!deleted)
+    try {
+      await deleteMessage(id,setError,setSucess)
+      setDeleted(!deleted)
+    } catch (_) {
+      // error already handled in service
+    }
     
   }
   return (  loading ? (<Loading/>) :    <div className="min-h-screen bg-gray-50">
@@ -131,7 +151,7 @@ const TicketDetail = () => {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <button className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
+              <button onClick={() => navigate(-1)} className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
                 <ArrowLeft className="w-5 h-5" />
               </button>
               <div>
@@ -159,7 +179,7 @@ const TicketDetail = () => {
                     {ticket?.status}
                   </span>
                   <span className={`px-3 py-1 text-sm font-medium rounded-full ${getPriorityColor(ticket.priority)}`}>
-                    {ticket?.priority?.toUpperCase()} PRIORITY
+                    {ticket?.priority ? ticket.priority.toUpperCase() : 'N/A'} PRIORITY
                   </span>
                 </div>
                 
@@ -213,12 +233,12 @@ const TicketDetail = () => {
                         </div>
                         <div className="flex items-center gap-2">
                           <button  
-                          onClick={()=>navigate(`/file-view?url=${attachment.path}&type=${attachment.type}`)}
+                          onClick={()=>navigate(`/file-view?url=${encodeURIComponent(getAttachmentUrl(attachment))}&type=${encodeURIComponent(attachment.type)}`)}
                           className="p-1 text-gray-400 hover:text-blue-600 rounded">
                             <Eye className="w-4 h-4" />
                           </button>
                         <a
-                        href={`http://localhost:8000/api/download-file?url=${attachment.path}&name=${attachment.name}`}
+                        href={`${apiBase}/api/download-file?url=${encodeURIComponent(attachment.path)}&name=${encodeURIComponent(attachment.name)}`}
                         className="p-1 text-gray-400 hover:text-green-600 rounded">
                             <Download className="w-4 h-4" />
                           </a>
@@ -268,14 +288,14 @@ const TicketDetail = () => {
                    <div className=" flex flex-col items-start justify-between mb-4 bg-slate-100 p-4 rounded-md">
                     {/* message */}
                    <div className={`break-words whitespace-pre-wrap w-full `}>
-                    <p className={`text-md text-gray-800 break-words ${expanded.status && expanded.id===reply.id ? 'line-clamp-2' : 'line-clamp-none'} whitespace-pre-wrap transition-all duration-300`}>          
+                    <p className={`text-md text-gray-800 break-words ${expanded.status && expanded.id===reply.id ? 'line-clamp-none' : 'line-clamp-2'} whitespace-pre-wrap transition-all duration-300`}>          
       {reply?.message}
     </p>
       <span
         onClick={() => setExpanded({status:!expanded.status,id:reply?.id})}
         className="cursor-pointer flex justify-strat mt-2 text-blue-400 text-sm "
       >
-        {expanded.status && expanded.id===reply?.id ?  'Lire plus':'Réduire' }
+        {expanded.status && expanded.id===reply?.id ? 'Réduire' : 'Lire plus'}
       </span>
   </div>
 </div>
@@ -297,10 +317,10 @@ const TicketDetail = () => {
                           </div>
                           <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button className="p-2 text-slate-400 hover:text-blue-600 rounded-lg hover:bg-white transition-colors">
-                              <Eye className="w-4 h-4" onClick={()=>navigate(`/file-view?url=${attachment.path}&type=${attachment.type}`)}/>
+                              <Eye className="w-4 h-4" onClick={()=>navigate(`/file-view?url=${encodeURIComponent(getAttachmentUrl(attachment))}&type=${encodeURIComponent(attachment.type)}`)}/>
                             </button>
                             <a
-                              href={`http://localhost:8000/api/download-file?url=${attachment.path}&name=${attachment.name}`}
+                              href={`${apiBase}/api/download-file?url=${encodeURIComponent(attachment.path)}&name=${encodeURIComponent(attachment.name)}`}
                              className="p-2 text-slate-400 hover:text-green-600 rounded-lg hover:bg-white transition-colors">
                               <Download className="w-4 h-4" />
                             </a>
@@ -324,10 +344,11 @@ const TicketDetail = () => {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                  <select ref={status} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                  <select value={statusValue} onChange={(e) => setStatusValue(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     <option value="new">New</option>
+                    <option value="assigned">Assigned</option>
                     <option value="in_progress">In Progress</option>
-                    <option value="waiting">Waiting</option>
+                    <option value="pending">Pending</option>
                     <option value="resolved">Resolved</option>
                     <option value="closed">Closed</option>
                   </select>
@@ -335,7 +356,7 @@ const TicketDetail = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
-                  <select ref={priority} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                  <select value={priorityValue} onChange={(e) => setPriorityValue(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
                     <option value="high">High</option>
@@ -347,9 +368,9 @@ const TicketDetail = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Assigned To</label>
                   <div className="flex items-center gap-2 p-2 border border-gray-200 rounded-lg">
                     <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-xs font-medium text-blue-800">
-                      {ticket?.assigned_to?.avatar}
+                      {(ticket?.assigned_user?.name || 'U').charAt(0).toUpperCase()}
                     </div>
-                    <span className="text-sm text-gray-900">{ticket?.assigned_user?.name}</span>
+                    <span className="text-sm text-gray-900">{ticket?.assigned_user?.name || 'Unassigned'}</span>
                   </div>
                 </div>
               </div>
@@ -369,7 +390,7 @@ const TicketDetail = () => {
               
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-sm font-medium text-green-800">
-                  {ticket?.user?.avatar}
+                  {(ticket?.user?.name || 'U').charAt(0).toUpperCase()}
                 </div>
                 <div>
                   <p className="font-medium text-gray-900">{ticket.user?.name}</p>

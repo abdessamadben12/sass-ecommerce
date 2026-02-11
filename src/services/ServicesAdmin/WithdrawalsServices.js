@@ -23,8 +23,8 @@ export const getWithdrawals = async (status, inputSerach, StartDate, endDate, pa
 export const getWithdrawalById = async (id) =>
   axiosConfig.get(`/admin/withdrawals/${id}`).then((res) => res.data);
 
-export const approveWithdrawal = async (id) =>
-  axiosConfig.post(`/admin/withdrawals/${id}/approve`).then((res) => res.data);
+export const approveWithdrawal = async (id, reason) =>
+  axiosConfig.post(`/admin/withdrawals/${id}/approve`, { reason }).then((res) => res.data);
 
 export const rejectWithdrawal = async (id, reason) =>
   axiosConfig.post(`/admin/withdrawals/${id}/reject`, { reason }).then((res) => res.data);

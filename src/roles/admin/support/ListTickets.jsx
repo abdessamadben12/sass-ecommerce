@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Search, Eye, MessageCircle, Clock, User, Tag, ChevronDown, MoreVertical, Link } from 'lucide-react';
+import { Search, Eye, MessageCircle, Clock, User, Tag, LifeBuoy, FileWarning, Sparkles } from 'lucide-react';
 import Pagination from '../../../components/ui/pagination';
 import { getAllTickets } from '../../../services/ServicesAdmin/TicketService';
 import { useNavigate } from 'react-router-dom';
@@ -23,11 +23,14 @@ useEffect(() => {
       setLoading(true);
       try {
         const response = await getAllTickets(searchTerm, sortBy,selectedFilter, currentPage, nbrTicketPerPage, setError);
+        if (!response?.tickets) {
+          throw new Error("Failed to load tickets.");
+        }
         setData(response);
         setCurrentPage(response.tickets.current_page);
         setNbrTicketPerPage(response.tickets.per_page);
       } catch (error) {
-        setError(error);
+        setError(error?.message || "Failed to load tickets.");
       } finally {
         setLoading(false);
       }
@@ -39,8 +42,9 @@ useEffect(() => {
   const getStatusColor = (status) => {
     const colors = {
       'new': 'bg-blue-100 text-blue-800 border-blue-200',
+      'assigned': 'bg-indigo-100 text-indigo-800 border-indigo-200',
       'in_progress': 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      'waiting': 'bg-orange-100 text-orange-800 border-orange-200',
+      'pending': 'bg-orange-100 text-orange-800 border-orange-200',
       'resolved': 'bg-green-100 text-green-800 border-green-200',
       'closed': 'bg-gray-100 text-gray-800 border-gray-200'
     };
@@ -59,11 +63,11 @@ useEffect(() => {
 
   const getTypeIcon = (type) => {
     const icons = {
-      'support': '🛠️',
-      'report': '🚨',
-      'feature_request': '💡'
+      'support': <LifeBuoy className="w-5 h-5 text-blue-500" />,
+      'report': <FileWarning className="w-5 h-5 text-red-500" />,
+      'feature_request': <Sparkles className="w-5 h-5 text-yellow-500" />
     };
-    return icons[type] || '📋';
+    return icons[type] || <Tag className="w-5 h-5 text-gray-400" />;
   };
 
   const getTypeLabel = (type) => {
@@ -78,8 +82,9 @@ useEffect(() => {
   const getStatusLabel = (status) => {
     const labels = {
       'new': 'New',
+      'assigned': 'Assigned',
       'in_progress': 'In Progress',
-      'waiting': 'Waiting',
+      'pending': 'Pending',
       'resolved': 'Resolved',
       'closed': 'Closed'
     };
@@ -97,6 +102,7 @@ useEffect(() => {
   };
 
   const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
     const date = new Date(dateString);
     const now = new Date();
     const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
@@ -116,7 +122,7 @@ useEffect(() => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">🎫 Ticket Management</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Ticket Management</h1>
           <p className="text-gray-600">View and manage all support tickets and reports</p>
         </div>
 
@@ -201,8 +207,9 @@ useEffect(() => {
               >
                 <option value="all">All Status</option>
                 <option value="new">New</option>
+                <option value="assigned">Assigned</option>
                 <option value="in_progress">In Progress</option>
-                <option value="waiting">Waiting</option>
+                <option value="pending">Pending</option>
                 <option value="resolved">Resolved</option>
                 <option value="closed">Closed</option>
               </select>
@@ -225,7 +232,7 @@ useEffect(() => {
         <div className="space-y-4 bg-white relative">
           {data?.tickets?.data?.length === 0 ? (
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-              <div className="text-gray-400 text-6xl mb-4">🔍</div>
+              <div className="text-gray-400 text-6xl mb-4">No data</div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">No tickets found</h3>
               <p className="text-gray-500">No tickets match your search criteria</p>
             </div>
@@ -253,7 +260,7 @@ useEffect(() => {
                         <span>•</span>
                         <span className="flex items-center gap-1">
                           <User className="w-4 h-4" />
-                          {ticket?.user?.name}
+                          {ticket?.user?.name || 'Unknown'}
                         </span>
                       </div>
 
@@ -302,16 +309,18 @@ useEffect(() => {
                     </div>
 
                     {/* Assigned To */}
-                    {ticket.assignedTo && (
+                    {ticket.assigned_user ? (
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <span>Assigned to:</span>
                         <div className="flex items-center gap-2">
                           <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-xs font-medium text-blue-800">
-                            {ticket.assignedTo.avatar}
+                            {(ticket.assigned_user?.name || 'U').charAt(0).toUpperCase()}
                           </div>
-                          <span className="font-medium">{ticket.assignedTo.name}</span>
+                          <span className="font-medium">{ticket.assigned_user?.name}</span>
                         </div>
                       </div>
+                    ) : (
+                      <div className="text-sm text-gray-500">Unassigned</div>
                     )}
                   </div>
                 </div>

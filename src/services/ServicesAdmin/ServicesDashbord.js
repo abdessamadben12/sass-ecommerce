@@ -1,6 +1,9 @@
 import axios from "axios";
 import { axiosConfig } from "../ConfigueAxios";
 
+export const getDashboardOverview = async () =>
+  axiosConfig.get("/admin/dashboard/overview").then((res) => res.data);
+
 export  const getAnnalyseUser = async ()=>await axiosConfig.get("/admin/userAnnalyse").then(res=>res.data)
 .catch(err=>console.log(err.message))
 

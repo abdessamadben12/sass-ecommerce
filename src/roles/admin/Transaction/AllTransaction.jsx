@@ -6,55 +6,61 @@ import Pagination from '../../../components/ui/pagination';
 import Loading from '../../../components/ui/loading';
 import { SearchIcon } from 'lucide-react';
 import { getTransaction } from '../../../services/ServicesAdmin/TransactionService';
+import { useAppSettings } from '../../../context/AppSettingsContext';
 
-const OrdersColumns = [
+const TransactionColumns = [
   {
-    key:"Trx",
-    label:"Trx",
-    render:order=>order.id
-  },
-    {
-      key: "user.name",
-      label: "User Name",
-      render: (order) => order.user?.name ?? "--",
-    },
-  {
-    key: " Amount	",
-    label: "amount",
-    render: (transaction) => `${transaction.total_price	}` ?? "--",
+    key: "trx",
+    label: "Trx",
+    render: (transaction) => transaction.trx ?? transaction.id,
   },
   {
-    key: "Remarks",
-    label: "Remarks",
-    render: (transaction) => transaction.remarks ?? "--",
+    key: "user.name",
+    label: "User Name",
+    render: (transaction) => transaction.user?.name ?? "--",
   },
   {
-    key:"type",
-    label:"Type",
-    render: (transaction) => transaction.type ?? "--",
+    key: "amount",
+    label: "Amount",
+    render: (transaction) => formatCurrency(transaction.amount ?? 0),
+  },
+  {
+    key: "trx_type",
+    label: "Type",
+    render: (transaction) => transaction.trx_type ?? "--",
+  },
+  {
+    key: "remark",
+    label: "Remark",
+    render: (transaction) => transaction.remark ?? "--",
   },
   {
     key: "status",
     label: "Status",
-    render: (order) =>
-      order.status === "completed" ? (
-        <span className="text-green-600 bg-green-100 px-2 py-1 font-semibold rounded-full ">{order.status}</span>
-      ) : order.status === "pending" ? (
-        <span className="text-yellow-600 bg-yellow-100 px-2 py-1 font-semibold rounded-full ">{order.status}</span>
-      ) : order.status === "canceled" ? (
-        <span className="text-red-600 bg-red-100  font-semibold px-2 py-1 rounded-full">{order.status}</span>
-      ) :order.status === "paid" ? (
-        <span className="text-blue-600 bg-blue-100  font-semibold px-2 py-1 rounded-full">{order.status}</span>
-      ) : order.status === "Shipped" ? (
-        <span className="text-purple-600 bg-purple-100  font-semibold px-2 py-1 rounded-full">{order.status}</span>
+    render: (transaction) =>
+      transaction.status == "success" ? (
+        <span className="text-green-600 bg-green-100 px-2 py-1 font-semibold rounded-full">
+          success
+        </span>
+      ) : transaction.status == "pending" ? (
+        <span className="text-yellow-600 bg-yellow-100 px-2 py-1 font-semibold rounded-full">
+          pending
+        </span>
+      ) : transaction.status == "failed" ? (
+        <span className="text-red-600 bg-red-100 font-semibold px-2 py-1 rounded-full">
+          failed
+        </span>
       ) : (
-        <span className="text-gray-600 bg-gray-100  font-semibold px-2 py-1 rounded-full">{order.status}</span>
+        <span className="text-gray-600 bg-gray-100 font-semibold px-2 py-1 rounded-full">
+          {transaction.status ?? "--"}
+        </span>
       ),
   },
-   {
+  {
     key: "created_at",
-    label: "Date of Order",
-    render: (order) => order.created_at.split("T")[0] ?? "--",
+    label: "Date",
+    render: (transaction) =>
+      transaction?.created_at ? String(transaction.created_at).split("T")[0] : "--",
   },
 ];
 const statusMap = [
@@ -64,6 +70,7 @@ const statusMap = [
 ]
 
 export function AllTransaction() {
+    const { formatCurrency } = useAppSettings();
     const [inputSerch, setInputSearch] = useState("");
     const [selectedPeriod, setSelectedPeriod] = useState(null);
     const [dataOrders, setDataOrders] = useState([])
@@ -72,7 +79,7 @@ export function AllTransaction() {
     const [totalPages, setTotalPages] = useState(1);
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(false);
-    const [status, setStatus] = useState(null);
+    const [status, setStatus] = useState("all");
     const [statistics, setStatistics] = useState({})
     const [showCalendar, setShowCalendar] = useState(false);
 
@@ -86,7 +93,15 @@ export function AllTransaction() {
         // Call the DepositService with the search input and selected period
         try {
             setLoading(true);
-            const data = await getTransaction(inputSerch, status, selectedPeriod?.start, selectedPeriod?.end, currentPage, perPage, setError);
+            const data = await getTransaction(
+              status === "all" ? null : status,
+              inputSerch,
+              selectedPeriod?.start || null,
+              selectedPeriod?.end || null,
+              currentPage,
+              perPage,
+              setError
+            );
             setDataOrders(data.data);
             setTotalPages(data.last_page);
             setCurrentPage(data.current_page);
@@ -99,7 +114,7 @@ export function AllTransaction() {
     };
     useEffect(() => {
         handleSearch();
-    }, [currentPage, perPage, status]);
+    }, [currentPage, perPage, status, selectedPeriod]);
 
     return (
         loading ? <Loading/> : <div className='min-h-screen p-6'>
@@ -115,7 +130,7 @@ export function AllTransaction() {
                 <div className='flex items-center gap-4 '>
                     <select name="status" onChange={(e) => setStatus(e.target.value)} value={status}
                             className="border border-gray-50 rounded-md p-2">
-                        <option value="null">Select Status</option>
+                        <option value="all">All</option>
                         {statusMap.map((status, index) => (
                             <option key={index} value={status.toLowerCase()}>{status}</option>
                         ))}
@@ -124,7 +139,7 @@ export function AllTransaction() {
                            className="border border-gray-300 rounded-md p-2 outline-none "
                            placeholder="Search by transaction ID"/>
                     <DateRangePicker strokePeriods={handleRange} searchCallback={handleSearch} NotIcon={true}/>
-                    <button className="bg-blue-600 text-white font-semibold  rounded-md px-6 py-2
+                    <button className="bg-[#008ECC] text-white font-semibold  rounded-md px-6 py-2
                 flex justify-center items-center gap-4">
                         <SearchIcon onClick={handleSearch} className="w-5 h-5 ml-2 inline-block font-bold text-x"/>
                         <span>Filter</span>
@@ -133,9 +148,9 @@ export function AllTransaction() {
             </div>
             <DynamicTable
                 data={dataOrders}
-                columns={OrdersColumns}
+                columns={TransactionColumns}
                 actions={{
-                    viewPath: "/admin/detaill-order",
+                    viewPath: "/admin/detaill-transaction",
                 }}
             />
             <NotifyError message={error} onClose={() => setError(null)} isVisible={error !== null && true}/>
@@ -146,3 +161,4 @@ export function AllTransaction() {
 
     )
 }
+

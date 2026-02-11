@@ -5,10 +5,10 @@ import DateRangePicker from '../../../components/ui/DateRangePicker';
 import NotifyError from '../../../components/ui/NotifyError';
 import Pagination from '../../../components/ui/pagination';
 import Loading from '../../../components/ui/loading';
-import { getWithdrawals } from '../../../services/ServicesAdmin/WithdrawalsServices';
 import Card from '../../../components/ui/card';
 import { CheckCircle, Clock, CreditCard, ShoppingCart } from 'lucide-react';
 import { getOrders, StatisticsOrders } from '../../../services/ServicesAdmin/ordersServices';
+import { useAppSettings } from '../../../context/AppSettingsContext';
 const OrdersColumns = [
   {
     key:"order_id",
@@ -24,9 +24,9 @@ const OrdersColumns = [
       render: (order) => order.user?.name ?? "--",
     },
   {
-    key: " total_price	",
+    key: "total_price",
     label: "Total Price",
-    render: (order) => `${order.total_price	}` ?? "--",
+    render: (order) => formatCurrency(order?.total_price ?? 0),
   },
   {
     key: "status",
@@ -40,7 +40,7 @@ const OrdersColumns = [
         <span className="text-red-600 bg-red-100  font-semibold px-2 py-1 rounded-full">{order.status}</span>
       ) :order.status === "paid" ? (
         <span className="text-blue-600 bg-blue-100  font-semibold px-2 py-1 rounded-full">{order.status}</span>
-      ) : order.status === "Shipped" ? (
+      ) : order.status === "shipped" ? (
         <span className="text-purple-600 bg-purple-100  font-semibold px-2 py-1 rounded-full">{order.status}</span>
       ) : (
         <span className="text-gray-600 bg-gray-100  font-semibold px-2 py-1 rounded-full">{order.status}</span>
@@ -49,11 +49,12 @@ const OrdersColumns = [
    {
     key: "created_at",
     label: "Date of Order",
-    render: (order) => order.created_at.split("T")[0] ?? "--",
+    render: (order) => (order?.created_at ? String(order.created_at).split("T")[0] : "--"),
   },
 ];
 
 export default function AllOrders() {
+  const { formatCurrency } = useAppSettings();
   const [inputSerch, setInputSearch] = useState("");
   const [selectedPeriod, setSelectedPeriod] = useState(null);
    const[dataOrders ,setDataOrders]=useState([])
@@ -62,7 +63,7 @@ export default function AllOrders() {
   const [totalPages, setTotalPages] = useState(1);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState(null);
+  const [status, setStatus] = useState("all");
   const [statistics, setStatistics] = useState({})
   const handleRange = (start, end) => {
     // form de date comme "2023-10-01"
@@ -70,11 +71,19 @@ export default function AllOrders() {
     const formattedEnd = end.toISOString().split('T')[0];
     setSelectedPeriod({ start: formattedStart, end: formattedEnd });
   };
-  const handleSearch = async() => {
+  const handleSearch = async () => {
     // Call the DepositService with the search input and selected period
     try {
       setLoading(true);
-      const data = await getOrders( inputSerch, status,selectedPeriod?.start, selectedPeriod?.end, currentPage, perPage, setError);
+      const data = await getOrders(
+        inputSerch,
+        status === "all" ? null : status,
+        selectedPeriod?.start,
+        selectedPeriod?.end,
+        currentPage,
+        perPage,
+        setError
+      );
       setDataOrders(data.data);
       setTotalPages(data.last_page);
       setCurrentPage(data.current_page);
@@ -88,13 +97,13 @@ export default function AllOrders() {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      const statisticsData=await StatisticsOrders(setError);
+      const statisticsData = await StatisticsOrders(setError);
       setStatistics(statisticsData);
+      await handleSearch();
       setLoading(false);
-    }
-    handleSearch();
+    };
     fetchData();
-  }, [ currentPage, perPage,status]);
+  }, [currentPage, perPage, status]);
   return (
 
     loading ? <Loading/> : <div className='min-h-screen p-6'>
@@ -106,7 +115,7 @@ export default function AllOrders() {
              icon={<ShoppingCart/>}
               bgColor={"bg-blue-100 text-blue-600" } 
               borderColor={"border border-blue-200 "}/>
-             <Card title="Total Revenue" value={statistics?.total_sales	} 
+             <Card title="Total Revenue" value={formatCurrency(statistics?.total_sales || 0)} 
              icon={<CreditCard/>}
               bgColor={"bg-blue-100 text-blue-600" } 
               borderColor={"border border-blue-200 "}/>
@@ -128,10 +137,10 @@ export default function AllOrders() {
                     className='bg-white border border-gray-300 text-gray-700 
                     rounded-md p-2 focus:outline-none focus:ring-2
                      focus:ring-blue-500 w-full' onChange={(e)=>setStatus(e.target.value)} >
-                      <option value="null">All</option>
+                      <option value="all">All</option>
                       <option value="pending">Pending</option>
                       <option value="paid">Paid</option>
-                      <option value="Shipped">Shipped</option>
+                      <option value="shipped">Shipped</option>
                       <option value="completed">Completed</option>
                       <option value="canceled">Canceled</option>
                     </select>
@@ -156,5 +165,8 @@ export default function AllOrders() {
     </div>
   )
 }
+
+
+
 
 

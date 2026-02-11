@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -8,106 +8,154 @@ import {
   YAxis,
   Tooltip,
 } from "recharts";
+import Pagination from "../../../components/ui/pagination";
+import NotifyError from "../../../components/ui/NotifyError";
+import Loading from "../../../components/ui/loading";
 
-export default function ReportBase({
+function ReportBase({
   title,
   description,
   columns,
-  rows,
   statusOptions,
-  chartKey,
   chartLabel,
+  fetchReport,
+  valueType = "number",
 }) {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [status, setStatus] = useState("all");
-  const [pendingFrom, setPendingFrom] = useState("");
-  const [pendingTo, setPendingTo] = useState("");
-  const [pendingStatus, setPendingStatus] = useState("all");
+  const [rows, setRows] = useState([]);
+  const [chartData, setChartData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [apiStatusOptions, setApiStatusOptions] = useState([]);
 
-  const filteredRows = useMemo(() => {
-    const fromDate = from ? new Date(from) : null;
-    const toDate = to ? new Date(to) : null;
-    const availableDates = new Set(rows.map((r) => r.date).filter(Boolean));
-    return rows.filter((row) => {
-      const rowDate = row.date ? new Date(row.date) : null;
-      const matchesStatus = status === "all" ? true : row.status === status;
+  const loadReport = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetchReport({
+        from,
+        to,
+        status,
+        page: currentPage,
+        perPage: Number(perPage),
+      });
 
-      const fromExists = from ? availableDates.has(from) : true;
-      const toExists = to ? availableDates.has(to) : true;
-      const datesExist = fromExists && toExists;
+      const paginatedRows = res?.rows || {};
+      setRows(paginatedRows?.data || []);
+      setCurrentPage(paginatedRows?.current_page || 1);
+      setPerPage(paginatedRows?.per_page || 10);
+      setTotalPages(paginatedRows?.last_page || 1);
+      setChartData((res?.chart || []).map((item) => ({ name: item.date, value: Number(item.value) || 0 })));
+      setApiStatusOptions(res?.status_options || []);
+    } catch (err) {
+      setError(err?.response?.data?.message || err?.message || "Failed to load report.");
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchReport, from, to, status, currentPage, perPage]);
 
-      const matchesFrom = fromDate && rowDate ? rowDate >= fromDate : true;
-      const matchesTo = toDate && rowDate ? rowDate <= toDate : true;
-      return matchesStatus && datesExist && matchesFrom && matchesTo;
-    });
-  }, [rows, from, to, status]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadReport();
+    }, 250);
 
-  const applyFilters = () => {
-    setFrom(pendingFrom);
-    setTo(pendingTo);
-    setStatus(pendingStatus);
+    return () => clearTimeout(timer);
+  }, [loadReport]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [from, to, status]);
+
+  const finalStatusOptions = useMemo(() => {
+    if (statusOptions?.length) return statusOptions;
+    return apiStatusOptions;
+  }, [statusOptions, apiStatusOptions]);
+
+  const getStatusColor = (val) => {
+    switch ((val || "").toLowerCase()) {
+      case "paid":
+      case "success":
+      case "active":
+      case "approved":
+      case "authenticated":
+      case "completed":
+        return "bg-emerald-100 text-emerald-700 border-emerald-200";
+      case "pending":
+      case "assigned":
+      case "in_progress":
+      case "shipped":
+      case "draft":
+        return "bg-amber-100 text-amber-700 border-amber-200";
+      case "cancelled":
+      case "failed":
+      case "rejected":
+      case "inactive":
+      case "anonymous":
+        return "bg-rose-100 text-rose-700 border-rose-200";
+      default:
+        return "bg-slate-100 text-slate-600 border-slate-200";
+    }
   };
 
-  const chartData = filteredRows.map((row) => ({
-    name: row.date,
-    value: Number(row[chartKey]) || 0,
-  }));
-
-  // Fonction interne pour styliser les badges de statut sans changer les data
-  const renderStatusBadge = (value) => {
-    const styles = {
-      paid: "bg-green-100 text-green-700 border-green-200",
-      pending: "bg-amber-100 text-amber-700 border-amber-200",
-      cancelled: "bg-red-100 text-red-700 border-red-200",
-    };
-    const style = styles[value] || "bg-gray-100 text-gray-700 border-gray-200";
-    return (
-      <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${style}`}>
-        {value}
-      </span>
-    );
+  const renderCell = (row, col) => {
+    if (typeof col.render === "function") return col.render(row);
+    if (col.key === "status") {
+      return (
+        <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(row[col.key])}`}>
+          {row[col.key] || "-"}
+        </span>
+      );
+    }
+    if (col.key === "amount" && valueType === "currency") {
+      const v = Number(row[col.key] || 0);
+      return <span className="font-bold text-slate-900">{v.toFixed(2)} $</span>;
+    }
+    return row[col.key] ?? "-";
   };
 
-  return (
-    <div className="p-8 bg-[#F8FAFC] min-h-screen text-slate-900 font-sans">
-      {/* Header */}
-      <div className="max-w-6xl mx-auto mb-10">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">{title}</h1>
-        <p className="text-slate-500 mt-2 text-lg">{description}</p>
-      </div>
+  return loading ? (
+    <Loading />
+  ) : (
+    <div className="p-4 md:p-8 bg-[#F1F5F9] min-h-screen font-sans">
+      <div className="max-w-6xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">{title}</h1>
+          <p className="text-slate-500 mt-1 text-lg">{description}</p>
+        </div>
 
-      <div className="max-w-6xl mx-auto space-y-6">
-        {/* Barre de Filtres */}
-        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">Date de début</label>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700 uppercase tracking-wider">Start</label>
               <input
                 type="date"
-                value={pendingFrom}
-                onChange={(e) => setPendingFrom(e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-slate-50/50"
+                value={from}
+                onChange={(e) => setFrom(e.target.value)}
+                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
               />
             </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">Date de fin</label>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700 uppercase tracking-wider">End</label>
               <input
                 type="date"
-                value={pendingTo}
-                onChange={(e) => setPendingTo(e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-slate-50/50"
+                value={to}
+                onChange={(e) => setTo(e.target.value)}
+                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
               />
             </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">Filtrer par statut</label>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700 uppercase tracking-wider">Status</label>
               <select
-                value={pendingStatus}
-                onChange={(e) => setPendingStatus(e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 bg-slate-50/50 focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer"
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 bg-white focus:ring-2 focus:ring-blue-500 outline-none appearance-none cursor-pointer"
               >
-                <option value="all">Tous les statuts</option>
-                {statusOptions.map((opt) => (
+                <option value="all">All</option>
+                {finalStatusOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}
                   </option>
@@ -115,93 +163,56 @@ export default function ReportBase({
               </select>
             </div>
           </div>
-          <div className="mt-4 flex justify-end">
-            <button
-              type="button"
-              onClick={applyFilters}
-              className="px-5 py-2.5 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 transition-colors"
-            >
-              Filtrer
-            </button>
-          </div>
         </div>
 
-        {/* Section Graphique */}
-        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-8">
-          <h2 className="text-lg font-bold text-slate-800 mb-8 flex items-center gap-2">
-            <span className="w-2 h-6 bg-indigo-600 rounded-full"></span>
-            {chartLabel}
-          </h2>
-          <div className="h-72">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8">
+          <h2 className="text-xl font-bold text-slate-800 mb-6">{chartLabel}</h2>
+          <div className="h-72 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
                 <defs>
-                  <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.15}/>
-                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                  <linearGradient id="colorVal" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis 
-                  dataKey="name" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{fill: '#94a3b8', fontSize: 12}}
-                  dy={10}
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "#64748B", fontSize: 12 }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: "#64748B", fontSize: 12 }} />
+                <Tooltip
+                  contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)" }}
                 />
-                <YAxis 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{fill: '#94a3b8', fontSize: 12}}
-                />
-                <Tooltip 
-                  contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'}}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="value" 
-                  stroke="#6366f1" 
-                  strokeWidth={3}
-                  fillOpacity={1} 
-                  fill="url(#colorValue)" 
-                />
+                <Area type="monotone" dataKey="value" stroke="#3B82F6" strokeWidth={3} fill="url(#colorVal)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Section Tableau */}
-        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full">
+            <table className="w-full text-left">
               <thead>
-                <tr className="bg-slate-50/50 border-b border-slate-100">
+                <tr className="bg-slate-50 border-b border-slate-200">
                   {columns.map((col) => (
-                    <th key={col.key} className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider text-slate-500">
+                    <th key={col.key} className="py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">
                       {col.label}
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredRows.length === 0 ? (
+                {rows.length === 0 ? (
                   <tr>
-                    <td colSpan={columns.length} className="py-12 text-center text-slate-400">
-                      Aucun résultat pour ces filtres.
+                    <td colSpan={columns.length} className="py-10 text-center text-slate-400 font-medium">
+                      No data found.
                     </td>
                   </tr>
                 ) : (
-                  filteredRows.map((row) => (
-                    <tr key={row.id} className="hover:bg-slate-50/50 transition-colors group">
+                  rows.map((row) => (
+                    <tr key={row.id || `${row.date}-${row.status}-${row.source || "row"}`} className="hover:bg-slate-50 transition-colors">
                       {columns.map((col) => (
-                        <td key={col.key} className="py-4 px-6 text-sm text-slate-600">
-                          {col.key === "status" ? (
-                             renderStatusBadge(row[col.key])
-                          ) : col.key === "amount" ? (
-                            <span className="font-semibold text-slate-900">{row[col.key]} €</span>
-                          ) : (
-                            row[col.key] ?? "-"
-                          )}
+                        <td key={col.key} className="py-4 px-6 text-sm text-slate-700">
+                          {renderCell(row, col)}
                         </td>
                       ))}
                     </tr>
@@ -211,7 +222,20 @@ export default function ReportBase({
             </table>
           </div>
         </div>
+
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          setCurrentPage={setCurrentPage}
+          perPage={perPage}
+          setPerPage={setPerPage}
+        />
       </div>
+
+      <NotifyError message={error} onClose={() => setError(null)} isVisible={!!error} />
     </div>
   );
 }
+
+export { ReportBase };
+export default ReportBase;

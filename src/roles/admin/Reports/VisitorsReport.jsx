@@ -1,33 +1,21 @@
 import ReportBase from "./ReportBase";
+import { getVisitorsReport } from "../../../services/ServicesAdmin/ReportsService";
 
 export default function VisitorsReport() {
   const columns = [
     { key: "date", label: "Date" },
     { key: "source", label: "Source" },
-    { key: "status", label: "Statut" },
-    { key: "visits", label: "Visites" },
-  ];
-
-  const rows = [
-    { id: 1, date: "2026-02-01", source: "Google", status: "active", visits: 540 },
-    { id: 2, date: "2026-02-04", source: "Direct", status: "active", visits: 320 },
-    { id: 3, date: "2026-02-06", source: "Ads", status: "blocked", visits: 40 },
-  ];
-
-  const statusOptions = [
-    { value: "active", label: "Active" },
-    { value: "blocked", label: "Blocked" },
+    { key: "status", label: "Status" },
+    { key: "visits", label: "Visits" },
   ];
 
   return (
     <ReportBase
       title="Visitors Report"
-      description="Analyse des visiteurs avec filtre par date et statut."
+      description="Traffic analytics by source and audience type."
       columns={columns}
-      rows={rows}
-      statusOptions={statusOptions}
-      chartKey="visits"
-      chartLabel="Visites par date"
+      chartLabel="Visits by date"
+      fetchReport={getVisitorsReport}
     />
   );
 }

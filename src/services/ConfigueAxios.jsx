@@ -1,11 +1,23 @@
 import axios from "axios"
 
-export const axiosConfig = axios.create({
-  baseURL: "http://localhost:8000/api",
+export const axiosBase = axios.create({
+  baseURL: "http://localhost:8000",
+  withCredentials: true,
   headers: {
     Accept: "application/json",
   },
+  xsrfCookieName: "XSRF-TOKEN",
+  xsrfHeaderName: "X-XSRF-TOKEN",
+})
+
+export const axiosConfig = axios.create({
+  baseURL: "http://localhost:8000/api",
   withCredentials: true,
+  headers: {
+    Accept: "application/json",
+  },
+  xsrfCookieName: "XSRF-TOKEN",
+  xsrfHeaderName: "X-XSRF-TOKEN",
 })
 
 axiosConfig.interceptors.request.use((config) => {
@@ -24,6 +36,6 @@ export const setAuthToken = (token) => {
   }
 }
 
-export const getCsrfTocken = async () =>
-  await axios.get("http://localhost:8000/sanctum/csrf-cookie").then((res) => res.data)
-
+export const getCsrfToken = async () => {
+  await axiosBase.get("/sanctum/csrf-cookie")
+}

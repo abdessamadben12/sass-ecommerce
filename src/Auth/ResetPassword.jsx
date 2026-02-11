@@ -14,18 +14,22 @@ export default function ResetPassword() {
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
 
+  const BRAND_COLOR = "#008ECC"
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError("")
     setMessage("")
+
     if (!token || !email) {
-      setError("Lien de reinitialisation invalide.")
+      setError("Invalid or expired reset link.")
       return
     }
     if (password !== passwordConfirmation) {
-      setError("Les mots de passe ne correspondent pas.")
+      setError("Passwords do not match.")
       return
     }
+
     setLoading(true)
     try {
       const res = await axiosConfig.post("/auth/reset-password", {
@@ -34,75 +38,84 @@ export default function ResetPassword() {
         password,
         password_confirmation: passwordConfirmation,
       })
-      setMessage(res.data?.message || "Mot de passe reinitialise.")
-      setTimeout(() => navigate("/login"), 1200)
+      setMessage(res.data?.message || "Password reset successfully.")
+      setTimeout(() => navigate("/login"), 2000)
     } catch (err) {
-      setError(err?.response?.data?.message || "Erreur de reinitialisation.")
+      setError(err?.response?.data?.message || "Failed to reset password.")
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-      <div className="w-full max-w-md bg-white rounded-lg shadow p-6">
-        <h1 className="text-2xl font-semibold text-gray-800 mb-2">
-          Reinitialiser le mot de passe
-        </h1>
-        <p className="text-sm text-gray-500 mb-6">
-          Choisissez un nouveau mot de passe.
-        </p>
+    <div className="min-h-screen w-full flex items-center justify-center bg-white border-t-8" style={{ borderTopColor: BRAND_COLOR }}>
+      <div className="w-full max-w-md p-8 border border-gray-200 rounded-none shadow-none">
+        
+        <header className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900 uppercase tracking-tight">
+            Reset Password
+          </h1>
+          <div className="h-1 w-12 mt-2" style={{ backgroundColor: BRAND_COLOR }} />
+          <p className="text-gray-500 mt-4 text-sm">
+            Please enter your new password below.
+          </p>
+        </header>
 
-        {message ? (
-          <div className="mb-4 text-sm text-green-700 bg-green-50 border border-green-100 rounded p-2">
-            {message}
-          </div>
-        ) : null}
-        {error ? (
-          <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-100 rounded p-2">
-            {error}
-          </div>
-        ) : null}
+        <div aria-live="polite">
+          {message && (
+            <div className="mb-4 p-3 text-sm bg-green-50 border border-green-200 text-green-700 rounded-none">
+              {message}
+            </div>
+          )}
+          {error && (
+            <div className="mb-4 p-3 text-sm bg-red-50 border border-red-200 text-red-700 rounded-none">
+              {error}
+            </div>
+          )}
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nouveau mot de passe
+            <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">
+              New Password
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-300"
               placeholder="••••••••"
+              className="w-full px-3 py-2 border border-gray-300 rounded-none outline-none focus:border-[#008ECC] transition-colors"
             />
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Confirmer le mot de passe
+            <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">
+              Confirm Password
             </label>
             <input
               type="password"
               value={passwordConfirmation}
               onChange={(e) => setPasswordConfirmation(e.target.value)}
               required
-              className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-300"
               placeholder="••••••••"
+              className="w-full px-3 py-2 border border-gray-300 rounded-none outline-none focus:border-[#008ECC] transition-colors"
             />
           </div>
+
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gray-900 text-white rounded py-2 hover:bg-gray-800 disabled:opacity-60"
+            style={{ backgroundColor: loading ? "#cccccc" : BRAND_COLOR }}
+            className="w-full text-white font-bold py-3 uppercase tracking-widest text-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed"
           >
-            {loading ? "En cours..." : "Reinitialiser"}
+            {loading ? "Updating..." : "Update Password"}
           </button>
         </form>
 
-        <div className="mt-4 text-sm">
-          <Link to="/login" className="text-gray-700 underline">
-            Retour au login
+        <div className="mt-6 pt-6 border-t border-gray-100 text-center">
+          <Link to="/login" style={{ color: BRAND_COLOR }} className="text-xs font-bold uppercase tracking-widest hover:underline">
+            Back to Login
           </Link>
         </div>
       </div>

@@ -42,14 +42,14 @@ export default function DynamicTable({
           </button>
         )}
 
-        {actions.onDelete && (
+        {/* {actions.onDelete && (
           <button
-            className="text-gren-600 hover:text-gren-800 hover:scale-110"
+            className="text-red-600 hover:text-red-800 hover:scale-110"
             onClick={() => setConfirmId(rowId)}
           >
             <Trash2 size={30} />
           </button>
-        )}
+        )} */}
          {actions.onEdit && (
           <button
             className="text-red-600 hover:text-red-800 hover:scale-110"
@@ -64,7 +64,7 @@ export default function DynamicTable({
   return (
     <div className="w-full overflow-x-auto rounded-lg">
       <table className="min-w-full table-auto">
-        <thead className="bg-blue-800 text-white ">
+        <thead className="bg-[#008ECC] text-white ">
           <tr className="font-bold">
             {columns.map((col) => (
               <th key={col.key} className="px-6 py-3 whitespace-nowrap text-center">

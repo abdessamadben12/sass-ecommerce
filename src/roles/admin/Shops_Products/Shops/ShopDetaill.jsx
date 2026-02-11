@@ -307,7 +307,7 @@ if (loading) return <Loading/>
             key={tab}
             onClick={()=>setActiveTab(tab)}
             className={`px-4 py-2 rounded-xl text-sm font-medium ${
-              activeTab === tab ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
+              activeTab === tab ? 'bg-[#008ECC] text-white' : 'text-slate-600 hover:bg-[#008ECC] hover:text-white'
             }`}
           >
             {tab === 'overview' ? 'Overview' : tab === 'products' ? 'Products' : 'Orders'}
@@ -476,7 +476,7 @@ if (loading) return <Loading/>
                 link.remove()
                 window.URL.revokeObjectURL(url)
               }}
-              className="px-4 py-2 rounded bg-slate-900 text-white text-sm hover:bg-slate-800"
+              className="px-4 py-2 rounded bg-[#008ECC] text-white text-sm hover:bg-[#005f73]"
             >
               Export CSV
             </button>
@@ -497,7 +497,7 @@ if (loading) return <Loading/>
                   <tr key={product.id} className="border-b border-slate-200">
                     <td className="py-3 px-4">{product.id}</td>
                     <td className="py-3 px-4">{product.title}</td>
-                    <td className="py-3 px-4">€{product.base_price}</td>
+                    <td className="py-3 px-4">ï¿½{product.base_price}</td>
                     <td className="py-3 px-4">{getStatus(product.status)}</td>
                     <td className="py-3 px-4">
                       <button
@@ -564,7 +564,7 @@ if (loading) return <Loading/>
                 link.remove()
                 window.URL.revokeObjectURL(url)
               }}
-              className="px-4 py-2 rounded bg-slate-900 text-white text-sm hover:bg-slate-800"
+              className="px-4 py-2 rounded bg-[#008ECC] text-white text-sm hover:bg-[#005f73]"
             >
               Export CSV
             </button>
@@ -589,7 +589,7 @@ if (loading) return <Loading/>
                     <td className="py-3 px-4">{order.user?.name}</td>
                     <td className="py-3 px-4">{order.order_items?.length || order.orderItems?.length || '-'}</td>
                     <td className="py-3 px-4">{order.status}</td>
-                    <td className="py-3 px-4">€{order.total_amount ?? order.total}</td>
+                    <td className="py-3 px-4">ï¿½{order.total_amount ?? order.total}</td>
                     <td className="py-3 px-4">{formatDate(order.created_at)}</td>
                     <td className="py-3 px-4">
                       <button

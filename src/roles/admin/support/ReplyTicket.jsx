@@ -1,6 +1,6 @@
-import React, { use, useEffect, useState } from 'react';
-import { Send, Paperclip, X, Image, FileText, Shield } from 'lucide-react';
-import { getTicketById, replayTicketMessage } from '../../../services/ServicesAdmin/TicketService';
+import React, { useEffect, useState } from 'react';
+import { Send, Paperclip, X, Image, FileText } from 'lucide-react';
+import { replayTicketMessage } from '../../../services/ServicesAdmin/TicketService';
 import { useParams } from 'react-router-dom';
 import NotifyError from '../../../components/ui/NotifyError';
 import { NotifySuccess } from '../../../components/ui/NotifySucces';
@@ -11,7 +11,7 @@ const ReplyTicket = ({handleFerme,ticket,isAjouter}) => {
   const [attachments, setAttachments] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const {id}=useParams();
-  const [sucess, setSucess] = useState(false);
+  const [sucess, setSucess] = useState({ etats: false, message: null });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const handleFileUpload = (event) => {
@@ -36,19 +36,24 @@ const ReplyTicket = ({handleFerme,ticket,isAjouter}) => {
   const handleSubmit =async () => {
     if (!message.trim()) return;
     setIsSubmitting(true);
-    const formData = new FormData();
-    formData.append('message', message);
-    formData.append('ticket_id',id);
-    formData.append("user_id",ticket.user.id)
-    attachments.forEach(attachment => {
-      formData.append('attachments[]', attachment.file);
-    });
-    await replayTicketMessage(formData,setError,setSucess)
+    try {
+      const formData = new FormData();
+      formData.append('message', message);
+      formData.append('ticket_id',id);
+      // user_id inferred from auth on backend
+      attachments.forEach(attachment => {
+        formData.append('attachments[]', attachment.file);
+      });
+      await replayTicketMessage(formData,setError,setSucess)
       setMessage('');
       setAttachments([]);
-      setIsSubmitting(false);
       handleFerme();
       isAjouter()
+    } catch (_) {
+      // error already handled in service
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   const getFileIcon = (type) => {
     return type === 'image' ? 
@@ -159,9 +164,9 @@ const ReplyTicket = ({handleFerme,ticket,isAjouter}) => {
         </button>
       </div>
 
-     <NotifyError message={error} onClose={()=>setError(false)} isVisible={error == null ? false : true}  />
+     <NotifyError message={error} onClose={()=>setError(null)} isVisible={error == null ? false : true}  />
       
-{sucess.etats && <NotifySuccess sucess={sucess.etats} message={sucess.message} onClose={() => setSucess(false)} />}    </div></div> 
+{sucess.etats && <NotifySuccess sucess={sucess.etats} message={sucess.message} onClose={() => setSucess({ etats: false, message: null })} />}    </div></div> 
 
   );
 };

@@ -6,10 +6,9 @@ import NotifyError from '../../../components/ui/NotifyError';
 import Pagination from '../../../components/ui/pagination';
 import Loading from '../../../components/ui/loading';
 import { getWithdrawals } from '../../../services/ServicesAdmin/WithdrawalsServices';
+import { useAppSettings } from '../../../context/AppSettingsContext';
 const WithdrawalsColumns = [
-  { key: "gateway", label: "Gateway | Transaction" ,
-    render:(withdrawal) => `${withdrawal.transactions?.trx ?? "--"}`
-  },
+ 
     {
     key:"user",
     label:"name",
@@ -34,23 +33,28 @@ const WithdrawalsColumns = [
   {
     key: "amount",
     label: "Amount",
-    render: (withdrawal) => `${withdrawal.amount} $`,
+    render: (withdrawal) => formatCurrency(withdrawal.amount ?? 0),
   },
 
   {
     key: "status",
     label: "Status",
-    render: (withdrawal) =>
-      withdrawal.status === "approved" ? (
-        <span className="text-green-600 bg-green-100 px-2 py-1 font-semibold rounded-full ">{withdrawal.status}</span>
-      ) : withdrawal.status === "pending" ? (
-        <span className="text-yellow-600 bg-yellow-100 px-2 py-1 font-semibold rounded-full ">{withdrawal.status}</span>
+    render: (withdrawal) => {
+      const status = withdrawal?.status ?? "unknown";
+      return status === "approved" ? (
+        <span className="text-green-600 bg-green-100 px-2 py-1 font-semibold rounded-full ">{status}</span>
+      ) : status === "pending" ? (
+        <span className="text-yellow-600 bg-yellow-100 px-2 py-1 font-semibold rounded-full ">{status}</span>
+      ) : status === "rejected" ? (
+        <span className="text-red-600 bg-red-100  font-semibold px-2 py-1 rounded-full">{status}</span>
       ) : (
-        <span className="text-red-600 bg-red-100  font-semibold px-2 py-1 rounded-full">{withdrawal.status}</span>
-      ),
+        <span className="text-gray-600 bg-gray-100  font-semibold px-2 py-1 rounded-full">{status}</span>
+      );
+    },
   },
 ];
 export default function AllWithdrawals() {
+  const { formatCurrency } = useAppSettings();
   const [inputSerch, setInputSearch] = useState("");
   const [selectedPeriod, setSelectedPeriod] = useState(null);
   const [status, setStatus] = useState("all");
@@ -82,9 +86,16 @@ export default function AllWithdrawals() {
       setLoading(false);
     }
   };
+  const handleReset = async () => {
+    setInputSearch("");
+    setSelectedPeriod(null);
+    setStatus("all");
+    setCurrentPage(1);
+    await handleSearch();
+  };
   useEffect(() => {
     handleSearch();
-  }, [ currentPage, perPage, status]);
+  }, [ currentPage, perPage, status, selectedPeriod]);
   
   return (
     loading ? <Loading/> : <div className='min-h-screen p-6'>
@@ -110,6 +121,12 @@ export default function AllWithdrawals() {
                       <option value="approved">Approved</option>
                       <option value="rejected">Rejected</option>
                     </select>
+                    <button
+                      className="border rounded px-3 py-2 text-sm bg-slate-100 hover:bg-slate-200"
+                      onClick={handleReset}
+                    >
+                      Default
+                    </button>
                 </div>
             <DynamicTable
               data={dataWithdrawals}
@@ -124,3 +141,4 @@ export default function AllWithdrawals() {
     </div>
   )
 }
+

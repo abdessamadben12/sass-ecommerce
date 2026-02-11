@@ -15,7 +15,7 @@ export default function WithdrawalDetaill() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [rejectReason, setRejectReason] = useState("");
+  const [remark, setRemark] = useState("");
 
   const load = async () => {
     setLoading(true);
@@ -39,7 +39,7 @@ export default function WithdrawalDetaill() {
     setError("");
     setSuccess("");
     try {
-      await approveWithdrawal(id);
+      await approveWithdrawal(id, remark);
       setSuccess("Withdrawal approuvé.");
       load();
     } catch (err) {
@@ -51,7 +51,7 @@ export default function WithdrawalDetaill() {
     setError("");
     setSuccess("");
     try {
-      await rejectWithdrawal(id, rejectReason);
+      await rejectWithdrawal(id, remark);
       setSuccess("Withdrawal rejeté.");
       load();
     } catch (err) {
@@ -100,18 +100,22 @@ export default function WithdrawalDetaill() {
             <span className="text-gray-500">Transaction:</span>{" "}
             <span className="font-medium">{withdrawal.transactions?.trx || "-"}</span>
           </div>
+          <div>
+            <span className="text-gray-500">Notes:</span>{" "}
+            <span className="font-medium">{withdrawal.notes ?? "-"}</span>
+          </div>
         </div>
       </div>
 
       <div className="bg-white border rounded-lg p-6">
         <div className="flex flex-col md:flex-row gap-3 md:items-end">
           <div className="flex-1">
-            <label className="text-sm text-gray-600">Motif de rejet (optionnel)</label>
+            <label className="text-sm text-gray-600">Remark (optionnel)</label>
             <input
               className="w-full border rounded px-3 py-2 mt-1"
-              value={rejectReason}
-              onChange={(e) => setRejectReason(e.target.value)}
-              placeholder="Raison..."
+              value={remark}
+              onChange={(e) => setRemark(e.target.value)}
+              placeholder="Remark..."
             />
           </div>
           <div className="flex gap-2">

@@ -15,6 +15,7 @@ import {
 import { Outlet } from "react-router-dom";
 import { Header } from "../components/layout/header";
 import { Sidebare } from "../components/layout/sidebare";
+import { useAppSettings } from "../context/AppSettingsContext";
 import { useEffect, useState } from "react";
 import { getNotificationsList } from "../services/ServicesAdmin/ServicesDashbord";
 
@@ -57,7 +58,8 @@ import { getNotificationsList } from "../services/ServicesAdmin/ServicesDashbord
       {name:"Order Report", link:"/admin/order-report"},
       {name:"User Report", link:"/admin/user-report"},
       {name:"Visitors Report", link:"/admin/visitors-report"},
-      {name:"Transaction Report", link:"/admin/transaction-report"}
+      {name:"Transaction Report", link:"/admin/transaction-report"},
+      {name:"Top Products", link:"/admin/top-products-report"}
     ]},
     { name: 'Marketing et promotion',  icon: Users ,hasSubmenu: true, children:[
       {name:"Email Marketing", link:"/admin/email-marketing"},
@@ -66,14 +68,15 @@ import { getNotificationsList } from "../services/ServicesAdmin/ServicesDashbord
       {name:"Campaigns", link:"/admin/campaigns"},
       {name:"Referrals", link:"/admin/referrals"},
     ]},
-    { name: 'Subscribers',      icon: UserCheck ,link:"subscribers"},
+    { name: 'Subscribers',      icon: UserCheck ,link:"/admin/subscribers"},
     { name: 'Activity Logs',   icon: List, link:"/admin/activity-logs"},
     { name: 'System Setting',   icon: Settings ,link:"/admin/setting"},
     { name: 'Admin Profile',   icon: User ,link:"/admin/profile"},
   ];
-export default function AdminLayout(){
+function AdminLayoutInner(){
   const [notifications,setNotificaion]=useState([])
   const [unreadCount,setUnreadCount]=useState(0)
+  const { appName, logoUrl } = useAppSettings();
   useEffect(()=>{
     async function fetchData(){
       const notifs=await getNotificationsList({ per_page: 6, status: "all" })
@@ -88,7 +91,7 @@ export default function AdminLayout(){
     <div className="relative min-h-screen">
            <div className="  flex bg-gray-50 p-0  fixed left-0 right-0 overfow-auto inset-x-0 overflow-y-auto h-screen  ">
         {/* Sidebar */}
-        <Sidebare items={sidebarItems} />
+        <Sidebare items={sidebarItems} logoUrl={logoUrl} appName={appName} />
         {/* Main content area */}
         <div className="flex-1 flex flex-col overflow-x-hidden ">
           {/* Header */}
@@ -103,4 +106,8 @@ export default function AdminLayout(){
       </div>     
     </div>
     </>
+}
+
+export default function AdminLayout(){
+  return <AdminLayoutInner />;
 }

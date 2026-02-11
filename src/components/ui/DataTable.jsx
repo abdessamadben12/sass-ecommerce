@@ -12,10 +12,10 @@ export default function DataTable({ data, columns,handleDelete,role,UrlActionDet
     if (key === "action" || key === "actions") {
       return (
         <div className="flex justify-center  items-center space-x-4 relative">
-          <button className="text-blue-600 hover:text-blue-800 hover:scale-110 " onClick={()=>navigate(`${UrlActionDetaill}/${item.id}`)}>
+          <button className="text-[#008ECC] hover:text-[#005f73] hover:scale-110 " onClick={()=>navigate(`${UrlActionDetaill}/${item.id}`)}>
             <Eye size={30}/>
           </button>
-          <button
+          {/* <button
             onClick={(e) => {
               e.stopPropagation();
               setShowAlert(true)
@@ -23,7 +23,7 @@ export default function DataTable({ data, columns,handleDelete,role,UrlActionDet
             }}
           >
            <Trash2 size={30} className=" text-red-600 hover:text-red-800 hover:scale-110" />
-          </button>
+          </button> */}
         </div>
       );
     }
@@ -50,7 +50,7 @@ export default function DataTable({ data, columns,handleDelete,role,UrlActionDet
    <div >
      <div className="overflow-x-auto w-full rounded-lg">
       <table className="w-full min-w-full table-auto">
-        <thead className="bg-blue-800 text-white">
+        <thead className="bg-[#008ECC] text-white">
           <tr className="text-md font-semibold text-left">
             {columns.map((col, index) => (
               <th key={index} className="	px-6 py-3 uppercase whitespace-nowrap text-center">
