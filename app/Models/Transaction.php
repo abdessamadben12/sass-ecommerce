@@ -10,7 +10,19 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class Transaction extends Model
 {
     use HasFactory;
-    protected $fillable = ['user_id', 'order_id', 'amount', 'payment_method', 'status'];
+    protected $fillable = [
+        'user_id',
+        'amount',
+        'trx_type',
+        'trx',
+        'post_balance',
+        'charge',
+        'remark',
+        'details',
+        'sourceable_type',
+        'sourceable_id',
+        'status',
+    ];
 
     protected $table = 'transactions';
     public function user()

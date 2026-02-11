@@ -33,6 +33,10 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        "role",
+        "status",
+        "is_2fa_enabled",
+        
     ];
 
     /**
@@ -77,7 +81,7 @@ class User extends Authenticatable
     }
     public function notifications()
     {
-        return $this->hasMany(Notification::class,'id','user_id');
+        return $this->hasMany(Notification::class,'user_id','id');
     }
     public function withdrawals()
     {

@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class Withdrawal extends Model
 {
     use HasFactory;
-    protected $fillable = ['user_id', 'amount', 'status', 'transaction_id'];
+    protected $fillable = ['user_id', 'amount', 'status', 'transaction_id', 'notes'];
     protected $table = 'withdrawals';
     public function user()
     {

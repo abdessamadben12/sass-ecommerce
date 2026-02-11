@@ -10,14 +10,16 @@ use Illuminate\Support\Str;
 class MoneyService
 
 {
-    public function addBalance(User $user, float $amount, string $remark = "Balance added", $sourceable = null)
+public function addBalance(User $user, float $amount, string $remark = "Balance added", $sourceable = null)
 {
     $wallet = $user->balance ?? Wallet::create([
         'user_id' => $user->id,
         'balance' => 0
     ]);
 
-    $wallet->increment('balance', $amount);
+    if ($amount !== 0.0) {
+        $wallet->increment('balance', $amount);
+    }
     $this->createTransaction(
         $user->id,
         $amount,
@@ -54,6 +56,11 @@ private function createTransaction(
     }
 
     $transaction->save();
+
+    if ($sourceable instanceof Withdrawal && empty($sourceable->transaction_id)) {
+        $sourceable->transaction_id = $transaction->trx;
+        $sourceable->save();
+    }
 }
 
 

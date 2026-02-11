@@ -28,7 +28,7 @@ class UserResource extends JsonResource
                 "state" => $this->details->state ?? "not entry",
                 "zipCode" => $this->details->zip ?? "not entry",
                 "country" => $this->details->country ?? "not entry",
-                "image" => $this->details->image ?? "not entry",
+            "image" => $this->details->image ?? "not entry",
             "balance" => number_format($this->balance->balance,2,".",",") ?? 0,
             "withdrawals_sum" => number_format($this->withdrawals_sum_amount,2,".",",") ?? 0,
             "deposits_sum" => $this->deposits_sum_amount ?? 0,

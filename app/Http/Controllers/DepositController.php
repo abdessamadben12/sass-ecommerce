@@ -18,7 +18,7 @@ class DepositController extends Controller
         $endDate = $request->input('end_date') !== null ? Carbon::parse($request->input('end_date'))->endOfDay() : null;
         $trxOrName = $request->input('search', null);
         $perPage = $request->input('per_page', 10);
-        $query = Deposit::query();
+        $query = Deposit::query()->whereHas('user');
 
         if ($trxOrName !== null) {
             $query->where(function ($q) use ($trxOrName) {
@@ -44,6 +44,9 @@ class DepositController extends Controller
 
     public function show(Deposit $deposit)
     {
+        if (!$deposit->user()->exists()) {
+            return response()->json(['message' => 'User not found for this deposit'], 404);
+        }
         $deposit->load(['user', 'transactions']);
         return response()->json($deposit, 200);
     }

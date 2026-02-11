@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class Ticket extends Model
 {
     use HasFactory;
-    public $fillable = ['title', 'description', 'priority','status', 'user_id', 'assigned_id',"attachments"];
+    public $fillable = ['title', 'description', 'priority', 'status', 'user_id', 'assigned_to', 'attachments'];
     protected $table = 'tickets';
     protected $casts = [
         'attachments' => 'array',

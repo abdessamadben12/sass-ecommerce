@@ -15,16 +15,18 @@ class TicketsController extends Controller
     {
         // Logic to retrieve and display tickets
         $perPage = $request->input('per_page', 10);
-        $status = $request->input('status', 'open');
-        $searchQuery = $request->input('search', '');
+        $status = $request->input('status', 'all');
+        $searchQuery = $request->input('search', $request->input('name', ''));
         $sortBy = $request->input('sort_by', 'created_at');
         $query = Ticket::query();
         if($status !== 'all') {
             $query->where('status', $status);
         }
         if ($searchQuery) {
-            $query->where('title', 'like', '%' . $searchQuery . '%')
+            $query->where(function ($q) use ($searchQuery) {
+                $q->where('title', 'like', '%' . $searchQuery . '%')
                   ->orWhere('description', 'like', '%' . $searchQuery . '%');
+            });
         }
          switch($sortBy){
             case 'oldest':
@@ -41,7 +43,7 @@ class TicketsController extends Controller
                 break;
         }
         $tickets = $query->with(['user', 'assignedUser'])->paginate($perPage);
-        $TotalallTickets = Ticket::all()->count();
+        $TotalallTickets = Ticket::count();
         $ProgssesTickets = Ticket::where('status', 'in_progress')->count();
         $newTickets = Ticket::where('status', 'new')->count();
         $resolvedTickets = Ticket::where('status', 'resolved')->count();
@@ -58,6 +60,9 @@ class TicketsController extends Controller
     public function getTicketDetail($id)
     {
         $ticket = Ticket::with(['user', 'assignedUser', 'messageReplay'])->find($id);
+        if (!$ticket) {
+            return response()->json(['message' => 'Ticket not found'], 404);
+        }
         if($ticket->attachments){
             $attachments=$ticket->attachments;
             foreach($attachments as $index => $attachment){
@@ -91,24 +96,29 @@ class TicketsController extends Controller
  
     public function updateTicket($id,Request $request){
         $request->validate([
-            "status"=>"required",
-            "priority"=>"required"
+            "status"=>"required|in:new,assigned,in_progress,pending,resolved,closed",
+            "priority"=>"required|in:low,medium,high,critical",
+            "assigned_to"=>"nullable|exists:users,id",
         ]);
         $ticket = Ticket::findOrFail($id);
-        $ticket->update($request->all());
+        $ticket->status = $request->status;
+        $ticket->priority = $request->priority;
+        if ($request->has('assigned_to')) {
+            $ticket->assigned_to = $request->assigned_to;
+        }
         $ticket->save();
         return response()->json(["message"=>"Ticket updated successfully","ticket"=>$ticket], 200);
     }
     public function deleteTicket($id)
     {
         $ticket = Ticket::findOrFail($id);
-        $messages=$ticket->messageReply ;
+        $messages=$ticket->messageReplay;
         if($messages){
-             foreach($messages as $index=> $message){
-        $message=new TicketService();
-        $idMessage=$messages[$index]['id'];
-        $message->deleteMessage($idMessage);
-        }
+             foreach($messages as $index=> $reply){
+                $service = new TicketService();
+                $idMessage = $messages[$index]['id'];
+                $service->deleteMessage($idMessage);
+            }
         }
        $attachments=$ticket->attachments;
         if($attachments){
@@ -116,7 +126,7 @@ class TicketsController extends Controller
             $path=$attachments[$index]["path"];
             $attachmentpath=str_replace("//","/",$path);
             $name=$attachments[$index]["name"];
-            Storage::disk("spaces_2")->delete($attachmentpath,$name);
+            Storage::disk("spaces_2")->delete($attachmentpath);
         }
         }
       

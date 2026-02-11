@@ -51,7 +51,7 @@ class WithdrawalsController extends Controller
         return response()->json($withdrawal, 200);
     }
 
-    public function approve(Withdrawal $withdrawal)
+    public function approve(Request $request, Withdrawal $withdrawal)
     {
         if ($withdrawal->status === 'approved') {
             return response()->json(['message' => 'Withdrawal already approved'], 400);
@@ -60,7 +60,18 @@ class WithdrawalsController extends Controller
             return response()->json(['message' => 'Withdrawal already rejected'], 400);
         }
 
-        $withdrawal->update(['status' => 'approved']);
+        $data = $request->validate([
+            'reason' => 'nullable|string',
+        ]);
+
+        $withdrawal->update([
+            'status' => 'approved',
+            'notes' => $data['reason'] ?? $withdrawal->notes,
+        ]);
+        if (!$withdrawal->transactions) {
+            $moneyService = app(\App\Services\MoneyService::class);
+            $moneyService->addBalance($withdrawal->user, 0, $data['reason'] ?? 'Withdrawal approved', $withdrawal);
+        }
 
         return response()->json(['message' => 'Withdrawal approved'], 200);
     }
@@ -78,7 +89,11 @@ class WithdrawalsController extends Controller
         DB::transaction(function () use ($withdrawal, $moneyService, $data) {
             $withdrawal->update([
                 'status' => 'rejected',
+                'notes' => $data['reason'] ?? $withdrawal->notes,
             ]);
+            if (!$withdrawal->transactions) {
+                $moneyService->addBalance($withdrawal->user, 0, $data['reason'] ?? 'Withdrawal rejected', $withdrawal);
+            }
             $moneyService->addBalance($withdrawal->user, (float) $withdrawal->amount, $data['reason'] ?? 'Withdrawal rejected', $withdrawal);
         });
 

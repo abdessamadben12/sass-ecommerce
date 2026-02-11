@@ -49,11 +49,9 @@ class ShopProductController extends Controller
             ->paginate($perPage);
 
         foreach ($shops as $shop) {
-            if (!empty($shop->logo) && Storage::disk('spaces_2')->exists($shop->logo)) {
-                $shop->logo = Storage::disk('spaces_2')->url($shop->logo);
-            }
-            if (!empty($shop->user?->avatar) && Storage::disk('spaces_2')->exists($shop->user->avatar)) {
-                $shop->user->avatar = Storage::disk('spaces_2')->url($shop->user->avatar);
+            $shop->logo = $this->safePublicUrl($shop->logo);
+            if (!empty($shop->user?->avatar)) {
+                $shop->user->avatar = $this->safePublicUrl($shop->user->avatar);
             }
         }
         return response()->json($shops, 200);
@@ -69,19 +67,17 @@ class ShopProductController extends Controller
             return response()->json(['message' => 'Shop not found'], 404);
         }
 
-        if (!empty($shop->logo) && Storage::disk('spaces_2')->exists($shop->logo)) {
-            $shop->logo = Storage::disk('spaces_2')->url($shop->logo);
-        }
-        if (!empty($shop->user?->avatar) && Storage::disk('spaces_2')->exists($shop->user->avatar)) {
-            $shop->user->avatar = Storage::disk('spaces_2')->url($shop->user->avatar);
+        $shop->logo = $this->safePublicUrl($shop->logo);
+        if (!empty($shop->user?->avatar)) {
+            $shop->user->avatar = $this->safePublicUrl($shop->user->avatar);
         }
 
         return response()->json($shop, 200);
     }
     public function getProducts(Request $request){
             $perPage = $request->input('per_page', 10);
-            $nameProduct=$request->name;
-            $nameShop=$request->name;
+            $nameProduct=$request->input('name');
+            $nameShop=$request->input('shop_name') ?? $request->input('shop') ?? $request->input('name_shop');
             $category=$request->category;
             $status=$request->status;
             $query = Product::query();
@@ -126,11 +122,11 @@ class ShopProductController extends Controller
         }
 
         $ordersCount = $ordersQuery->count();
-        $revenue = $ordersQuery->sum('total_amount');
+        $revenue = $ordersQuery->sum('total_price');
 
         $dailyQuery = clone $ordersQuery;
         $daily = $dailyQuery
-            ->selectRaw('DATE(created_at) as date, COUNT(*) as orders, SUM(total_amount) as revenue')
+            ->selectRaw('DATE(created_at) as date, COUNT(*) as orders, SUM(total_price) as revenue')
             ->groupBy('date')
             ->orderBy('date', 'asc')
             ->get();
@@ -353,7 +349,7 @@ class ShopProductController extends Controller
                     $order->id,
                     $order->user?->name,
                     $order->status,
-                    $order->total_amount ?? $order->total,
+                    $order->total_price,
                     $itemsCount,
                     $order->created_at,
                 ]);
@@ -384,5 +380,20 @@ class ShopProductController extends Controller
         } catch (\Exception $e) {
             // ignore logging errors
         }
+    }
+
+    private function safePublicUrl(?string $path): ?string
+    {
+        if (empty($path)) {
+            return null;
+        }
+        try {
+            if (Storage::disk('spaces_2')->exists($path)) {
+                return Storage::disk('spaces_2')->url($path);
+            }
+        } catch (\Throwable $e) {
+            // ignore storage errors to avoid breaking the response
+        }
+        return null;
     }
 }

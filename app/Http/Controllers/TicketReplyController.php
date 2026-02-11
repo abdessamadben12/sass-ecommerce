@@ -13,10 +13,14 @@ class TicketReplyController extends Controller
    
     public function create(Request $request){
         $request->validate([
-            "user_id"=>"required|exists:users,id",
             "ticket_id"=>"required|exists:tickets,id",
-            "message"=>"required",
+            "message"=>"required|string",
+            "user_id"=>"nullable|exists:users,id",
         ]);
+        $userId = $request->user()?->id ?? $request->input("user_id");
+        if (!$userId) {
+            return response()->json(["message" => "User not found"], 422);
+        }
         $attachments=[];
         if($request->hasFile("attachments")){
             foreach($request->file("attachments") as $file){
@@ -32,16 +36,19 @@ class TicketReplyController extends Controller
         }
         TicketReply::create([
             "ticket_id"=>$request->ticket_id,
-            "user_id"=>$request->user_id,
+            "user_id"=>$userId,
             "message"=>$request->message,
             "attachments"=>$attachments
         ]);
+        return response()->json(["message"=>"Reply sent successfully"], 201);
     }
-    public function deleteMessage(Request $request){
-        $id=$request->id;
+    public function deleteMessage($id){
         $newMessage=new TicketService();
-         $res=$newMessage->deleteMessage($id);
-        return response()->json($res);
+        $res=$newMessage->deleteMessage((int)$id);
+        if (!($res['ok'] ?? false)) {
+            return response()->json(['message' => $res['message'] ?? 'Failed to delete message'], $res['status'] ?? 500);
+        }
+        return response()->json(['message' => $res['message'] ?? 'Message deleted successfully'], 200);
     }
 
 }

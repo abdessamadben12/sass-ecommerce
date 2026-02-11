@@ -18,9 +18,9 @@ class TicketReply extends Model
         "attachments"=>"array"
     ];
     public function user(){
-        return $this->belongTo(User::class,"user_id");
+        return $this->belongsTo(User::class,"user_id");
     }
     public function ticket(){
-        return $this->belongTo(Ticket::class,"ticket_id");
+        return $this->belongsTo(Ticket::class,"ticket_id");
     }
 }

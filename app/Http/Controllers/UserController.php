@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use App\Http\Requests\UpdateUserRequest;
-use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
@@ -33,9 +32,6 @@ class UserController extends Controller
    $users = $query->with(["balance", "orders", "shops.products"])
      ->withSum("orders","total_price")
      ->where('status', 'active')->paginate($perPage);
-        return response()->json([
-            'data' => $users
-        ], 200); 
         return response()->json([
             'data' => $users
         ], 200); 
@@ -61,9 +57,6 @@ class UserController extends Controller
         return response()->json([
             'data' => $users
         ], 200); 
-        return response()->json([
-            'data' => $users
-        ], 200);
        
      } 
         
@@ -74,31 +67,6 @@ class UserController extends Controller
     $query = User::query();
     if(!empty($role) && $role !== 'null' && $role !== 'undefined'){
           $query->where('role', $role);
-    } 
-    public function createAdmin(Request $request)
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8',
-            'role' => 'required|string|in:admin,moderator',
-        ]);
-
-        $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-        ]);
-
-        $user->update([
-            'role' => $validated['role'],
-            'status' => 'active',
-        ]);
-
-        return response()->json([
-            'message' => 'Admin created successfully',
-            'user' => $user,
-        ], 201);
     }
     if(!empty($name) && $name !== 'null' && $name !== 'undefined'){
          $query->where(function ($q) use ($name) {
@@ -116,24 +84,28 @@ class UserController extends Controller
     } 
     public function getUser(Request $request){
         $id = $request->id;
-        if(User::find($id)->role=="seller"){
-            $user=User::find($id)->with(["balance", "orders","withdrawals","deposits","details"])
+        $user = User::findOrFail($id);
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+        if($user->role=="seller"){
+            $user = User::with(["balance", "orders","withdrawals","deposits","details"])
+                ->withCount("orders")
+                ->withSum("withdrawals","amount")
+                ->withSum("deposits","amount")
+                ->withSum("transactions","amount")  
+                ->withSum("profit","total_amount")
+                ->find($id);
+            return response()->json(["user"=>new UserResource($user)], 200);
+        }
+        $user = User::with(["balance", "orders", "shops.products","withdrawals","deposits","transactions","profit","details"])
+            ->withCount('products')
             ->withCount("orders")
             ->withSum("withdrawals","amount")
             ->withSum("deposits","amount")
             ->withSum("transactions","amount")  
-            ->withSum("profit","total_amount")->find($id);
-            return response()->json(["user"=>new UserResource($user)]);
-
-        }
-        $user=User::with(["balance", "orders", "shops.products","withdrawals","deposits","transactions","profit","details"])
-        ->withCount('products')
-        ->withCount("orders")
-        ->withSum("withdrawals","amount")
-        ->withSum("deposits","amount")
-        ->withSum("transactions","amount")  
-        ->withSum("profit","total_amount")
-        ->find($id);
+            ->withSum("profit","total_amount")
+            ->find($id);
        $totalShopProfit = $user->profit->sum('total_amount');
         $totalDueAmount = $user->shops
                 ->flatMap->profits
@@ -214,7 +186,7 @@ public function subBalance(Request $request)
             $wallet = $user->balance()->lockForUpdate()->first();
 
             if (!$wallet || $wallet->balance < $amount) {
-                abort(400, 'Solde insuffisant pour effectuer cette opération.');
+                abort(400, 'Solde insuffisant pour effectuer cette operation.');
             }
 
             // Soustraction sécurisée
@@ -222,7 +194,7 @@ public function subBalance(Request $request)
         });
 
         return response()->json([
-            'message' => 'Opération effectuée avec succès.'
+            'message' => 'Operation effectuee avec succes.'
         ], 200);
 
     } catch (\Exception $e) {
@@ -235,11 +207,13 @@ public function subBalance(Request $request)
     $user = User::findOrFail($id);
 
     // Update main user fields
-    $user->update([
-        'email' => $request->email,
-        'email_verified_at' => $request->verfied_email ? now() : null,
-        'is_2fa_enabled' => $request->twoFA ? 1: 0,
-    ]);
+    $user->email = $request->input('email', $user->email);
+    $user->email_verified_at = $request->boolean('verified_email') ? now() : null;
+    $user->is_2fa_enabled = $request->boolean('twoFA');
+    if ($request->filled('status')) {
+        $user->status = $request->input('status');
+    }
+    $user->save();
     // Update or create details
     $user->details()->updateOrCreate(
         ['user_id' => $user->id],
@@ -258,7 +232,7 @@ public function subBalance(Request $request)
     return response()->json([
         'message' => 'User updated successfully',
         "2fa"=>$request->twoFA,
-        "email-verified"=>$request->verfied_email ? true : false,
+        "email-verified"=>$request->boolean('verified_email'),
         // 'user'    => $user->fresh(['details']),
     ]);
 }

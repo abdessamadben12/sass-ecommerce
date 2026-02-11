@@ -25,6 +25,9 @@ use App\Http\Controllers\FileDownloadController;
 use App\Http\Controllers\TemplateController;
 use App\Http\Controllers\LicenseController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\SubscribersController;
+use App\Http\Controllers\ReportsController;
 
 
 /*
@@ -50,6 +53,7 @@ Route::prefix('auth')->group(function () {
 });
 Route::middleware(['auth:sanctum','admin'])->group(function () {
 Route::get('/admin/userAnnalyse', [AdminController::class, 'getAnnalyseUser'])->name('admin.userAnnalyse');
+Route::get('/admin/dashboard/overview', [AdminController::class, 'dashboardOverview'])->name('admin.dashboard.overview');
 Route::get('/admin/depositAnalyse', [AdminController::class, 'getAnnalyseDeposit'])->name('admin.depositAnalyse');
 Route::get('/admin/withdrawalAnalyse', [AdminController::class, 'getAnnalyseWithdrawal'])->name('admin.withdrawalAnalyse');
 Route::get('/admin/globalViews', [AdminController::class, 'getViewsGlobal'])->name('admin.globalViews');
@@ -87,8 +91,16 @@ Route::get("/admin/send-nitification",[NotificationController::class,"sendNotifi
 // marketing email
 Route::post("/admin/email-marketing", [MarketingEmailController::class, "send"])->name('admin.email-marketing');
 Route::get("/admin/marketing/recipients", [MarketingRecipientController::class, "search"])->name('admin.marketing.recipients');
+Route::get("/admin/subscribers", [SubscribersController::class, "index"])->name('admin.subscribers.index');
 // activity logs
 Route::get("/admin/activity-logs", [ActivityLogController::class, "index"])->name('admin.activity-logs');
+// reports
+Route::get("/admin/reports/products", [ReportsController::class, "products"])->name('admin.reports.products');
+Route::get("/admin/reports/orders", [ReportsController::class, "orders"])->name('admin.reports.orders');
+Route::get("/admin/reports/users", [ReportsController::class, "users"])->name('admin.reports.users');
+Route::get("/admin/reports/visitors", [ReportsController::class, "visitors"])->name('admin.reports.visitors');
+Route::get("/admin/reports/transactions", [ReportsController::class, "transactions"])->name('admin.reports.transactions');
+Route::get("/admin/reports/top-products", [ReportsController::class, "topProducts"])->name('admin.reports.top-products');
 // marketing modules
 Route::prefix('/admin/marketing')->group(function () {
     Route::get('/promotions', [PromotionController::class, 'index']);
@@ -127,6 +139,28 @@ Route::get("/admin/orders", [OrdersController::class, 'getOrders'])->name('admin
 Route::get("/admin/order/{id}", [OrdersController::class, 'getOrderDetail'])->name('admin.order.detail');
 // transaction
 Route::get("/admin/transactions", [TransactionController::class, 'getTransactions'])->name('admin.transactions');
+Route::get("/admin/transactions/{id}", [TransactionController::class, 'getTransactionDetail'])->name('admin.transactions.detail');
+// settings
+Route::get("/admin/settings/general", [SettingsController::class, 'getGeneral']);
+Route::put("/admin/settings/general", [SettingsController::class, 'updateGeneral']);
+Route::post("/admin/settings/upload-logo", [SettingsController::class, 'uploadLogo']);
+Route::post("/admin/settings/upload-favicon", [SettingsController::class, 'uploadFavicon']);
+Route::get("/admin/settings/policies", [SettingsController::class, 'getPolicies']);
+Route::put("/admin/settings/policies", [SettingsController::class, 'updatePolicies']);
+Route::get("/admin/settings/payment", [SettingsController::class, 'getPayment']);
+Route::put("/admin/settings/payment", [SettingsController::class, 'updatePayment']);
+Route::get("/admin/settings/email", [SettingsController::class, 'getEmail']);
+Route::put("/admin/settings/email", [SettingsController::class, 'updateEmail']);
+Route::get("/admin/settings/notifications", [SettingsController::class, 'getNotifications']);
+Route::put("/admin/settings/notifications", [SettingsController::class, 'updateNotifications']);
+Route::get("/admin/settings/commission", [SettingsController::class, 'getCommission']);
+Route::put("/admin/settings/commission", [SettingsController::class, 'updateCommission']);
+Route::get("/admin/settings/storage", [SettingsController::class, 'getStorage']);
+Route::put("/admin/settings/storage", [SettingsController::class, 'updateStorage']);
+Route::get("/admin/settings/maintenance", [SettingsController::class, 'getMaintenance']);
+Route::put("/admin/settings/maintenance", [SettingsController::class, 'updateMaintenance']);
+Route::get("/admin/settings/seo", [SettingsController::class, 'getSeo']);
+Route::put("/admin/settings/seo", [SettingsController::class, 'updateSeo']);
 // support tickets
 Route::get("/admin/tickets", [TicketsController::class, 'index'])->name('admin.tickets.index');
 Route::get("/admin/ticket-detaill/{id}",[TicketsController::class,"getTicketDetail"])->name("admin.tickets.index");
@@ -141,9 +175,7 @@ Route::apiResource('categorie', CategoryController::class);
 Route::get('parent-categorie', [CategoryController::class,"parentcategory"]);
 Route::get('category-by-name', [CategoryController::class,"categoryByName"]);
 // les templates
-
 Route::get('license-by-name', [LicenseController::class,"licenseByName"]);
-
 Route::prefix('/admin/templates')->group(function () {
     Route::get('/get-templates', [TemplateController::class, 'index']);
     Route::post('/create-template', [TemplateController::class, 'store']);
@@ -157,13 +189,5 @@ Route::get('/pdf', [TemplateController::class, 'renderPdf']);
 });
 
 require __DIR__.'/product.php';
-
-
-
-
-
-
-
-
 
 

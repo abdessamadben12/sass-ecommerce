@@ -33,10 +33,12 @@ class OrdersController extends Controller
         $category = $request->input('category', null);
         $query = Order::query();
         if($NameShopOrUserName!==null){
-            $query->whereHas("orderItems.product.shop", function ($q) use ($NameShopOrUserName) {
-                $q->where('name', 'like', '%' . $NameShopOrUserName . '%');
-            })->orWhereHas('user', function ($q) use ($NameShopOrUserName) {
-                $q->where('name', 'like', '%' . $NameShopOrUserName . '%');
+            $query->where(function ($q) use ($NameShopOrUserName) {
+                $q->whereHas("orderItems.product.shop", function ($q2) use ($NameShopOrUserName) {
+                    $q2->where('name', 'like', '%' . $NameShopOrUserName . '%');
+                })->orWhereHas('user', function ($q2) use ($NameShopOrUserName) {
+                    $q2->where('name', 'like', '%' . $NameShopOrUserName . '%');
+                });
             });
         }
         if($status !== null) {
@@ -62,13 +64,16 @@ class OrdersController extends Controller
     {
         $id = $request->id;
         $order = Order::find($id);
+        if (!$order) {
+            return response()->json(['message' => 'Order not found'], 404);
+        }
         return response()->json([
             "id" => $order->id,
             "custemer" => $order->user->name,
             "custemer_email" => $order->user->email,
             "total" => $order->total_price,
 
-            "items"=> count($order->orderItems) !=0?$order->orderItems->pluck('product')->file_format():[],
+            "items"=> $order->orderItems->pluck('product.file_format')->filter()->values(),
             "status" => $order->status,
             "date" => $order->created_at,
             
