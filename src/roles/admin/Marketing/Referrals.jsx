@@ -39,7 +39,7 @@ export default function Referrals() {
       setForm({ user_id: "", code: "", reward_type: "credit", reward_value: 0 });
       load();
     } catch (err) {
-      setError(err?.response?.data?.message || "Erreur.");
+      setError(err?.response?.data?.message || "Error.");
     }
   };
 
@@ -78,9 +78,7 @@ export default function Referrals() {
             value={form.reward_value}
             onChange={(e) => setForm({ ...form, reward_value: Number(e.target.value) })}
           />
-          <button className="bg-gray-900 text-white rounded px-3 py-2">
-            Ajouter
-          </button>
+          <button className="bg-[#008ECC] text-white rounded px-3 py-2">Add</button>
         </form>
         {error ? <div className="text-sm text-red-600 mt-2">{error}</div> : null}
       </div>
@@ -108,7 +106,7 @@ export default function Referrals() {
             {codes.length === 0 ? (
               <tr>
                 <td colSpan={3} className="py-4 text-center text-gray-500">
-                  Aucun code.
+                  No codes found.
                 </td>
               </tr>
             ) : null}
@@ -137,7 +135,7 @@ export default function Referrals() {
             {invites.length === 0 ? (
               <tr>
                 <td colSpan={3} className="py-4 text-center text-gray-500">
-                  Aucun invite.
+                  No invites found.
                 </td>
               </tr>
             ) : null}
@@ -168,7 +166,7 @@ export default function Referrals() {
             {rewards.length === 0 ? (
               <tr>
                 <td colSpan={4} className="py-4 text-center text-gray-500">
-                  Aucun reward.
+                  No rewards found.
                 </td>
               </tr>
             ) : null}
@@ -178,3 +176,4 @@ export default function Referrals() {
     </div>
   );
 }
+

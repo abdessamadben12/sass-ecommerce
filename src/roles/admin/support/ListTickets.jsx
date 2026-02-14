@@ -118,7 +118,7 @@ useEffect(() => {
   };
 
   return (
-    loading  ? <Loading/> :<div className="min-h-screen bg-gray-50 p-6">
+    loading  ? <Loading/> :<div className="min-h-screen bg-slate-100 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -127,20 +127,20 @@ useEffect(() => {
         </div>
 
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <div className="bg-white shadow-sm border border-slate-200 p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Tickets</p>
                 <p className="text-2xl font-bold text-gray-900">{data?.total}</p>
               </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+              <div className="w-12 h-12 bg-[#E6F6FF] flex items-center justify-center">
                 <Tag className="w-6 h-6 text-blue-600" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="bg-white shadow-sm border border-slate-200 p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">In Progress</p>
@@ -148,13 +148,13 @@ useEffect(() => {
                   {data?.in_progress}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+              <div className="w-12 h-12 bg-amber-100 flex items-center justify-center">
                 <Clock className="w-6 h-6 text-yellow-600" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="bg-white shadow-sm border border-slate-200 p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">New</p>
@@ -162,13 +162,13 @@ useEffect(() => {
                   {data?.new}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+              <div className="w-12 h-12 bg-[#E6F6FF] flex items-center justify-center">
                 <MessageCircle className="w-6 h-6 text-blue-600" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="bg-white shadow-sm border border-slate-200 p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Resolved</p>
@@ -176,7 +176,7 @@ useEffect(() => {
                   {data?.resolved}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+              <div className="w-12 h-12 bg-emerald-100 flex items-center justify-center">
                 <User className="w-6 h-6 text-green-600" />
               </div>
             </div>
@@ -184,7 +184,7 @@ useEffect(() => {
         </div>
 
         {/* Search and Filter Bar */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+        <div className="bg-white shadow-sm border border-slate-200 p-6 mb-6">
           <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
             {/* Search */}
             <div className="relative flex-1 max-w-md">
@@ -194,7 +194,7 @@ useEffect(() => {
                 placeholder="Search tickets..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-slate-300 focus:ring-2 focus:ring-[#008ECC] focus:border-transparent"
               />
             </div>
 
@@ -203,7 +203,7 @@ useEffect(() => {
               <select
                 value={selectedFilter}
                 onChange={(e) => setSelectedFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="px-4 py-2 border border-slate-300 focus:ring-2 focus:ring-[#008ECC] focus:border-transparent"
               >
                 <option value="all">All Status</option>
                 <option value="new">New</option>
@@ -217,7 +217,7 @@ useEffect(() => {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="px-4 py-2 border border-slate-300 focus:ring-2 focus:ring-[#008ECC] focus:border-transparent"
               >
                 <option value="newest">Newest First</option>
                 <option value="oldest">Oldest First</option>
@@ -231,7 +231,7 @@ useEffect(() => {
         {/* Tickets List */}
         <div className="space-y-4 bg-white relative">
           {data?.tickets?.data?.length === 0 ? (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+            <div className="bg-white shadow-sm border border-slate-200 p-8 text-center">
               <div className="text-gray-400 text-6xl mb-4">No data</div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">No tickets found</h3>
               <p className="text-gray-500">No tickets match your search criteria</p>
@@ -240,7 +240,7 @@ useEffect(() => {
             data?.tickets?.data?.map((ticket) => (
               <div
                 key={ticket.id}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200"
+                className="bg-white shadow-sm border border-slate-200 hover:shadow-md transition-shadow duration-200"
               >
                 <div className="p-6">
                   {/* Ticket Header */}
@@ -283,7 +283,7 @@ useEffect(() => {
 
                     {/* Action Menu */}
                     <div className="flex items-center gap-2">
-                      <button onClick={() => navigate(`/admin/detaill-ticket/${ticket.id}`)}className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                      <button onClick={() => navigate(`/admin/detaill-ticket/${ticket.id}`)}className="p-2 text-gray-400 hover:text-[#008ECC] hover:bg-[#E6F6FF] transition-colors">
                         <Eye className="w-4 h-4" />
                       </button>
                     </div>
@@ -293,17 +293,17 @@ useEffect(() => {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       {/* Type */}
-                      <span className="px-3 py-1 bg-blue-50 text-blue-700 text-sm font-medium rounded-full border border-blue-200">
+                      <span className="px-3 py-1 bg-[#E6F6FF] text-[#008ECC] text-sm font-medium border border-[#B9E7FF]">
                         {getTypeLabel(ticket.type)}
                       </span>
 
                       {/* Status */}
-                      <span className={`px-3 py-1 text-sm font-medium rounded-full border ${getStatusColor(ticket.status)}`}>
+                      <span className={`px-3 py-1 text-sm font-medium border ${getStatusColor(ticket.status)}`}>
                         {getStatusLabel(ticket.status)}
                       </span>
 
                       {/* Priority */}
-                      <span className={`px-3 py-1 text-sm font-medium rounded-full border ${getPriorityColor(ticket.priority)}`}>
+                      <span className={`px-3 py-1 text-sm font-medium border ${getPriorityColor(ticket.priority)}`}>
                         {getPriorityLabel(ticket.priority)} Priority
                       </span>
                     </div>
@@ -313,7 +313,7 @@ useEffect(() => {
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <span>Assigned to:</span>
                         <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-xs font-medium text-blue-800">
+                          <div className="w-6 h-6 bg-[#E6F6FF] flex items-center justify-center text-xs font-medium text-[#008ECC]">
                             {(ticket.assigned_user?.name || 'U').charAt(0).toUpperCase()}
                           </div>
                           <span className="font-medium">{ticket.assigned_user?.name}</span>
@@ -326,7 +326,7 @@ useEffect(() => {
                 </div>
 
                 {/* Quick Actions Bar */}
-                <div className="px-6 py-3 bg-gray-50 border-t border-gray-200 rounded-b-lg">
+                <div className="px-6 py-3 bg-slate-50 border-t border-slate-200">
                   <div className="flex items-center justify-between">
                     <div className="text-xs text-gray-500">
                       Last updated: {ticket.updated_at ? formatDate(ticket.updated_at) : 'N/A'}

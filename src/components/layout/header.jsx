@@ -18,47 +18,62 @@ export function Header({ title = "Dashboard", onToggleSidebar, notifications, nu
       if (notifRef.current && !notifRef.current.contains(e.target)) setNotifOpen(false);
       if (adminRef.current && !adminRef.current.contains(e.target)) setAdminOpen(false);
     }
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    const handleEscape = (event) => {
+      if (event.key !== "Escape") return;
+      setNotifOpen(false);
+      setAdminOpen(false);
+    };
+
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, []);
+
+  const badgeCount = numberNotification > 99 ? "99+" : numberNotification;
+
   return (
-    <header className="sticky top-0 px-10 py-10 z-40 flex h-20 items-center justify-between bg-white/80 backdrop-blur-md border-b border-gray-100  sm:px-10">
-      
-      {/* — Gauche : Menu Mobile & Titre — */}
-      <div className="flex items-center gap-4">
+    <header className="sticky top-0 z-40 flex h-20 items-center justify-between border-b border-gray-100 bg-white/80 px-4 py-3 backdrop-blur-md sm:px-6 lg:px-10">
+      <div className="flex min-w-0 items-center gap-3 sm:gap-4">
         <button
           onClick={onToggleSidebar}
-          className="lg:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+          className="rounded-lg p-2 text-slate-600 transition-colors hover:bg-slate-100 lg:hidden"
+          aria-label="Toggle sidebar"
+          type="button"
         >
-          <Menu className="w-6 h-6" />
+          <Menu className="h-6 w-6" />
         </button>
-        <h1 className="text-xl font-bold text-slate-800 tracking-tight">
-          {title}
-        </h1>
+        <h1 className="truncate text-base font-bold tracking-tight text-slate-800 sm:text-lg md:text-xl">{title}</h1>
       </div>
 
-      {/* — Droite : Actions & Profil (Input supprimé) — */}
       <div className="flex items-center gap-2 sm:gap-4">
-        
-        {/* Notifications */}
         <div className="relative" ref={notifRef}>
           <button
-            onClick={() => setNotifOpen(!notifOpen)}
-            className={`p-2.5 rounded-xl transition-all ${
+            onClick={() => {
+              setNotifOpen((prev) => !prev);
+              setAdminOpen(false);
+            }}
+            className={`rounded-xl p-2.5 transition-all ${
               notifOpen ? "bg-blue-50 text-[#0ea5e9]" : "text-slate-400 hover:bg-slate-50 hover:text-slate-600"
             }`}
+            aria-label="Open notifications"
+            aria-expanded={notifOpen}
+            type="button"
           >
             <Bell size={20} />
             {numberNotification > 0 && (
-              <span className="absolute top-2 right-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white">
-                {numberNotification}
+              <span className="absolute right-2 top-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white">
+                {badgeCount}
               </span>
             )}
           </button>
-          
+
           {notifOpen && (
-            <div className="absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-2xl shadow-slate-200 border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="absolute right-0 mt-3 w-[calc(100vw-2rem)] max-w-80 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-2xl shadow-slate-200 animate-in fade-in zoom-in-95 duration-200">
               <NotificationCard
                 notifications={notifications}
                 numberNot={numberNotification}
@@ -68,64 +83,71 @@ export function Header({ title = "Dashboard", onToggleSidebar, notifications, nu
           )}
         </div>
 
-        {/* Paramètres */}
         <button
           onClick={() => navigate("/admin/setting")}
-          className="p-2.5 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all"
+          className="rounded-xl p-2.5 text-slate-400 transition-all hover:bg-slate-50 hover:text-slate-600"
+          aria-label="Open settings"
+          type="button"
         >
           <Settings size={20} />
         </button>
 
-        {/* Separator vertical (optionnel, pour séparer visuellement les icônes du profil) */}
-        <div className="h-8 w-[1px] bg-slate-100 mx-1 hidden sm:block"></div>
+        <div className="mx-1 hidden h-8 w-[1px] bg-slate-100 sm:block" />
 
-        {/* Profil Admin */}
         <div className="relative" ref={adminRef}>
           <button
-            onClick={() => setAdminOpen(!adminOpen)}
-            className={`flex items-center gap-3 p-1.5 rounded-xl transition-all ${
+            onClick={() => {
+              setAdminOpen((prev) => !prev);
+              setNotifOpen(false);
+            }}
+            className={`flex items-center gap-3 rounded-xl p-1.5 transition-all ${
               adminOpen ? "bg-slate-50" : "hover:bg-slate-50"
             }`}
+            aria-label="Open profile menu"
+            aria-expanded={adminOpen}
+            type="button"
           >
-            <div className="w-9 h-9 bg-[#0ea5e9] rounded-lg flex items-center justify-center shadow-md shadow-blue-100">
-              <User className="w-5 h-5 text-white" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#0ea5e9] shadow-md shadow-blue-100">
+              <User className="h-5 w-5 text-white" />
             </div>
-            <div className="hidden sm:block text-left">
-              <p className="text-sm font-bold text-slate-700 leading-tight">
-                {admin?.name || "Administrateur"}
-              </p>
-              <p className="text-[11px] text-slate-400 font-medium">En ligne</p>
+            <div className="hidden text-left sm:block">
+              <p className="text-sm font-bold leading-tight text-slate-700">{admin?.name || "Administrator"}</p>
+              <p className="text-[11px] font-medium text-slate-400">Online</p>
             </div>
-            <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${adminOpen ? "rotate-180" : ""}`} />
+            <ChevronDown
+              className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${adminOpen ? "rotate-180" : ""}`}
+            />
           </button>
 
-          {/* Menu déroulant Admin */}
           {adminOpen && (
-            <div className="absolute right-0 mt-3 w-56 bg-white rounded-2xl shadow-2xl shadow-slate-200 border border-slate-100 py-2 animate-in fade-in zoom-in-95 duration-200">
-              <div className="px-4 py-2 mb-2 border-b border-slate-50">
-                <p className="text-xs text-slate-400 uppercase font-bold tracking-wider">Compte</p>
+            <div className="absolute right-0 mt-3 w-56 rounded-2xl border border-slate-100 bg-white py-2 shadow-2xl shadow-slate-200 animate-in fade-in zoom-in-95 duration-200">
+              <div className="mb-2 border-b border-slate-50 px-4 py-2">
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Account</p>
               </div>
               <button
-                className="w-full flex items-center px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-[#0ea5e9] transition-colors"
+                className="w-full px-4 py-2.5 text-left text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-[#0ea5e9]"
                 onClick={() => navigate("/admin/profile")}
+                type="button"
               >
-                Mon profil
+                My profile
               </button>
               <button
-                className="w-full flex items-center px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-[#0ea5e9] transition-colors"
+                className="w-full px-4 py-2.5 text-left text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-[#0ea5e9]"
                 onClick={() => navigate("/admin/setting")}
+                type="button"
               >
-                Paramètres
+                Settings
               </button>
-              <div className="my-1 border-t border-slate-50"></div>
+              <div className="my-1 border-t border-slate-50" />
               <button
-                className="w-full flex items-center px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors font-medium"
+                className="w-full px-4 py-2.5 text-left text-sm font-medium text-red-500 transition-colors hover:bg-red-50"
                 onClick={async () => {
                   await logoutAdmin();
                   navigate("/login");
                 }}
+                type="button"
               >
-                Déconnexion
+                Sign out
               </button>
             </div>
           )}
@@ -134,3 +156,4 @@ export function Header({ title = "Dashboard", onToggleSidebar, notifications, nu
     </header>
   );
 }
+

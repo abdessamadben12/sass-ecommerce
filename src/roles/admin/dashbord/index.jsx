@@ -11,7 +11,7 @@ import NotifyError from '../../../components/ui/NotifyError';
 
 const IconRenderer = ({ iconName, size = 24, color = 'black' }) => {
   const LucideIcon = LucideIcons[iconName];
-  if (!LucideIcon) return <span>Icone inconnue: {iconName}</span>;
+  if (!LucideIcon) return <span>Unknown icon: {iconName}</span>;
   return <LucideIcon size={size} color={color} />;
 };
 
@@ -20,6 +20,7 @@ export default function Dashboard() {
   const [deposit, setDeposit] = useState([]);
   const [withdrawal, setWithdrawal] = useState([]);
   const [viewGlobal, setViewGlobal] = useState([]);
+  const [profits, setProfits] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -33,6 +34,7 @@ export default function Dashboard() {
         setDeposit(overview?.deposits || []);
         setWithdrawal(overview?.withdrawals || []);
         setViewGlobal(overview?.global || []);
+        setProfits(overview?.profits || []);
       } catch (err) {
         setError(err?.response?.data?.message || err?.message || 'Failed to load dashboard overview.');
       } finally {
@@ -116,6 +118,21 @@ export default function Dashboard() {
           </div>
         </section>
 
+        <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-3">Profit Analytics</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+            {profits?.map((item, key) => (
+              <CardDeposit
+                key={key}
+                title={item.title}
+                value={item.value}
+                icon={<IconRenderer iconName={item.icon} color={item.iconColor} size={28} />}
+                bgColor={item.bgColor}
+              />
+            ))}
+          </div>
+        </section>
+
         <section>
           <TransactionsReport />
         </section>
@@ -129,3 +146,4 @@ export default function Dashboard() {
     </>
   );
 }
+

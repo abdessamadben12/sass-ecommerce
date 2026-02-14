@@ -32,7 +32,7 @@ export default function Campaigns() {
       setForm({ name: "", type: "email", status: "draft", target_type: "subscribers" });
       load();
     } catch (err) {
-      setError(err?.response?.data?.message || "Erreur.");
+      setError(err?.response?.data?.message || "Error.");
     }
   };
 
@@ -49,7 +49,7 @@ export default function Campaigns() {
         <form onSubmit={submit} className="grid grid-cols-1 md:grid-cols-5 gap-3">
           <input
             className="border rounded px-3 py-2"
-            placeholder="Nom"
+            placeholder="Name"
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             required
@@ -84,9 +84,7 @@ export default function Campaigns() {
             <option value="users">Users</option>
             <option value="all_users">All Users</option>
           </select>
-          <button className="bg-gray-900 text-white rounded px-3 py-2">
-            Ajouter
-          </button>
+          <button className="bg-[#008ECC] text-white rounded px-3 py-2">Add</button>
         </form>
         {error ? <div className="text-sm text-red-600 mt-2">{error}</div> : null}
       </div>
@@ -95,10 +93,10 @@ export default function Campaigns() {
         <table className="min-w-full text-sm">
           <thead>
             <tr className="text-left text-gray-500 border-b">
-              <th className="py-2">Nom</th>
+              <th className="py-2">Name</th>
               <th className="py-2">Type</th>
-              <th className="py-2">Statut</th>
-              <th className="py-2">Cible</th>
+              <th className="py-2">Status</th>
+              <th className="py-2">Target</th>
               <th className="py-2">Actions</th>
             </tr>
           </thead>
@@ -113,16 +111,14 @@ export default function Campaigns() {
                   <button
                     className="text-red-600 text-xs"
                     onClick={() => remove(c.id)}
-                  >
-                    Supprimer
-                  </button>
+                  >Delete</button>
                 </td>
               </tr>
             ))}
             {items.length === 0 ? (
               <tr>
                 <td colSpan={5} className="py-4 text-center text-gray-500">
-                  Aucun élément.
+                  No items found.
                 </td>
               </tr>
             ) : null}
@@ -132,3 +128,4 @@ export default function Campaigns() {
     </div>
   );
 }
+

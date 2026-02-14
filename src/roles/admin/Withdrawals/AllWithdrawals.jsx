@@ -7,7 +7,20 @@ import Pagination from '../../../components/ui/pagination';
 import Loading from '../../../components/ui/loading';
 import { getWithdrawals } from '../../../services/ServicesAdmin/WithdrawalsServices';
 import { useAppSettings } from '../../../context/AppSettingsContext';
-const WithdrawalsColumns = [
+
+export default function AllWithdrawals() {
+  const { formatCurrency } = useAppSettings();
+
+  const [inputSerch, setInputSearch] = useState("");
+  const [selectedPeriod, setSelectedPeriod] = useState(null);
+  const [status, setStatus] = useState("all");
+   const[dataWithdrawals ,setDataWithdrawals]=useState([])
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(5);
+  const [totalPages, setTotalPages] = useState(1);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const WithdrawalsColumns = [
  
     {
     key:"user",
@@ -53,17 +66,6 @@ const WithdrawalsColumns = [
     },
   },
 ];
-export default function AllWithdrawals() {
-  const { formatCurrency } = useAppSettings();
-  const [inputSerch, setInputSearch] = useState("");
-  const [selectedPeriod, setSelectedPeriod] = useState(null);
-  const [status, setStatus] = useState("all");
-   const[dataWithdrawals ,setDataWithdrawals]=useState([])
-  const [currentPage, setCurrentPage] = useState(1);
-  const [perPage, setPerPage] = useState(5);
-  const [totalPages, setTotalPages] = useState(1);
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
      const handleRange = (start, end) => {
     // form de date comme "2023-10-01"
     const formattedStart = start.toISOString().split('T')[0];

@@ -6,7 +6,13 @@ import CalendarRange from './Calendar';
 
 
 
-const DateRangePicker = ({ strokePeriods, searchCallback, NotIcon, onChange }) => {
+const DateRangePicker = ({
+  strokePeriods,
+  searchCallback,
+  NotIcon,
+  onChange,
+  containerClassName = "p-6 max-w-lg",
+}) => {
   const [periodOptions, setPeriodOptions] = useState([
     { name: "Today", value: [new Date(), new Date()] },
     { name: "Yesterday", value: [new Date(Date.now() - 86400000), new Date(Date.now() - 86400000)] },
@@ -63,7 +69,7 @@ const DateRangePicker = ({ strokePeriods, searchCallback, NotIcon, onChange }) =
   };
 
   return (
-    <div className="p-6 max-w-lg ">
+    <div className={containerClassName}>
       <div className="relative" ref={containerRef}>
         <div className="flex items-center border border-gray-300 rounded-lg shadow-sm">
           <input

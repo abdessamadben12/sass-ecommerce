@@ -1,10 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
-import { sendMarketingEmail, searchMarketingRecipients } from "../../../services/ServicesAdmin/MarketingService";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import {
+  getMarketingEmailTemplates,
+  sendMarketingEmail,
+  searchMarketingRecipients,
+} from "../../../services/ServicesAdmin/MarketingService";
 import NotifyError from "../../../components/ui/NotifyError";
 import { NotifySuccess } from "../../../components/ui/NotifySucces";
-import { getTemplates } from "../../../services/ServicesAdmin/TemplateService";
 
 export default function EmailMarketing() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [form, setForm] = useState({
     subject: "",
     content: "",
@@ -13,6 +19,7 @@ export default function EmailMarketing() {
     recipientQuery: "",
     selectedRecipients: [],
     templateId: "",
+    adminIds: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -42,28 +49,37 @@ export default function EmailMarketing() {
         content: form.content,
         target: form.target,
       };
+
+      if (form.templateId) {
+        payload.template_id = Number(form.templateId);
+      }
+
       if (form.target === "users") {
         const idsFromInput = parseUserIds(form.userIds);
-        const idsFromSelected = form.selectedRecipients
-          .filter((r) => r.type === "user")
-          .map((r) => r.id);
+        const idsFromSelected = form.selectedRecipients.filter((r) => r.type === "user").map((r) => r.id);
         payload.user_ids = Array.from(new Set([...idsFromInput, ...idsFromSelected]));
       }
+
+      if (form.target === "admins") {
+        const idsFromInput = parseUserIds(form.adminIds);
+        const idsFromSelected = form.selectedRecipients.filter((r) => r.type === "admin").map((r) => r.id);
+        const adminIds = Array.from(new Set([...idsFromInput, ...idsFromSelected]));
+        if (adminIds.length > 0) {
+          payload.admin_ids = adminIds;
+        }
+      }
+
       if (form.target === "subscribers") {
-        const emails = form.selectedRecipients
-          .filter((r) => r.type === "subscriber")
-          .map((r) => r.email);
+        const emails = form.selectedRecipients.filter((r) => r.type === "subscriber").map((r) => r.email);
         if (emails.length > 0) {
           payload.subscriber_emails = emails;
         }
       }
+
       const res = await sendMarketingEmail(payload);
-      setSuccess(res?.message || "Email envoyé.");
+      setSuccess(res?.message || "Email sent.");
     } catch (err) {
-      const message =
-        err?.response?.data?.message ||
-        err?.message ||
-        "Erreur lors de l'envoi.";
+      const message = err?.response?.data?.message || err?.message || "Failed to send email.";
       setError(message);
     } finally {
       setLoading(false);
@@ -75,16 +91,18 @@ export default function EmailMarketing() {
     const loadTemplates = async () => {
       try {
         setTemplateLoading(true);
-        const res = await getTemplates(null, () => {});
-        const items = res?.data || res?.items || res || [];
-        const emailTemplates = (items?.data || items).filter((t) =>
-          String(t.type || "").startsWith("email_")
-        );
+        const res = await getMarketingEmailTemplates();
+        const items = res?.data || [];
+        const emailTemplates = items.filter((t) => {
+          const type = String(t?.type || "").toLowerCase();
+          return type.startsWith("email_") || type === "email" || type.includes("email");
+        });
         if (isMounted) setTemplates(emailTemplates);
       } finally {
         if (isMounted) setTemplateLoading(false);
       }
     };
+
     loadTemplates();
     return () => {
       isMounted = false;
@@ -92,38 +110,47 @@ export default function EmailMarketing() {
   }, []);
 
   useEffect(() => {
-    if (!form.recipientQuery && form.recipientQuery !== "") return;
-    const type = form.target === "subscribers" ? "subscribers" : "users";
+    const templateIdFromUrl = searchParams.get("template_id");
+    if (!templateIdFromUrl || templates.length === 0) return;
+    onSelectTemplate(templateIdFromUrl);
+  }, [searchParams, templates]);
+
+  useEffect(() => {
+    const type = form.target === "subscribers" ? "subscribers" : form.target === "admins" ? "admins" : "users";
     if (form.target === "all_users") {
       setRecipientOptions([]);
       return;
     }
+
     const handle = setTimeout(async () => {
       try {
         const res = await searchMarketingRecipients(type, form.recipientQuery);
         setRecipientOptions(res?.items || []);
-      } catch (err) {
+      } catch {
         setRecipientOptions([]);
       }
     }, 300);
+
     return () => clearTimeout(handle);
   }, [form.recipientQuery, form.target]);
 
   const recipientDatalistId = useMemo(
-    () => (form.target === "subscribers" ? "subscriber-options" : "user-options"),
+    () =>
+      form.target === "subscribers"
+        ? "subscriber-options"
+        : form.target === "admins"
+          ? "admin-options"
+          : "user-options",
     [form.target]
   );
 
   const addRecipientFromQuery = () => {
     if (!form.recipientQuery) return;
-    const match = recipientOptions.find(
-      (opt) => opt.email?.toLowerCase() === form.recipientQuery.toLowerCase()
-    );
+    const match = recipientOptions.find((opt) => opt.email?.toLowerCase() === form.recipientQuery.toLowerCase());
     if (!match) return;
+
     setForm((prev) => {
-      const exists = prev.selectedRecipients.some(
-        (r) => r.type === match.type && r.email === match.email
-      );
+      const exists = prev.selectedRecipients.some((r) => r.type === match.type && r.email === match.email);
       if (exists) return { ...prev, recipientQuery: "" };
       return {
         ...prev,
@@ -151,50 +178,43 @@ export default function EmailMarketing() {
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="min-h-screen bg-gray-50 p-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Email Marketing</h1>
-        <p className="text-sm text-gray-500">
-          Envoyer une campagne email vers des utilisateurs ou des abonnés.
-        </p>
+        <p className="text-sm text-gray-500">Send an email campaign to users or subscribers.</p>
       </div>
 
-      <div className="bg-white border border-gray-100 rounded-xl shadow-sm p-6">
+      <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Sujet
-            </label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Subject</label>
             <input
               type="text"
               value={form.subject}
               onChange={(e) => onChange("subject", e.target.value)}
-              required
-              className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-300"
-              placeholder="Titre de la campagne"
+              required={!form.templateId}
+              className="w-full rounded border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-300"
+              placeholder="Campaign title"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Cible
-            </label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Target</label>
             <select
               value={form.target}
               onChange={(e) => onChange("target", e.target.value)}
-              className="w-full border rounded px-3 py-2 bg-white"
+              className="w-full rounded border bg-white px-3 py-2"
             >
               <option value="subscribers">Subscribers</option>
-              <option value="users">Users spécifiques (IDs)</option>
+              <option value="users">Specific users (IDs)</option>
+              <option value="admins">Specific admins (IDs)</option>
               <option value="all_users">All Users</option>
             </select>
           </div>
 
           {form.target !== "all_users" && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Recherche par email
-              </label>
+              <label className="mb-1 block text-sm font-medium text-gray-700">Search by email</label>
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -202,16 +222,14 @@ export default function EmailMarketing() {
                   value={form.recipientQuery}
                   onChange={(e) => onChange("recipientQuery", e.target.value)}
                   onBlur={addRecipientFromQuery}
-                  className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-300"
-                  placeholder="taper un email..."
+                  className="w-full rounded border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                  placeholder="type an email..."
                 />
                 <button
                   type="button"
                   onClick={addRecipientFromQuery}
-                  className="px-3 py-2 bg-gray-100 border rounded hover:bg-gray-200 text-sm"
-                >
-                  Ajouter
-                </button>
+                  className="rounded border bg-gray-100 px-3 py-2 text-sm hover:bg-gray-200"
+                >Add</button>
               </div>
               <datalist id={recipientDatalistId}>
                 {recipientOptions.map((opt) => (
@@ -222,14 +240,18 @@ export default function EmailMarketing() {
                 <div className="mt-2 flex flex-wrap gap-2">
                   {form.selectedRecipients
                     .filter((r) =>
-                      form.target === "subscribers" ? r.type === "subscriber" : r.type === "user"
+                      form.target === "subscribers"
+                        ? r.type === "subscriber"
+                        : form.target === "admins"
+                          ? r.type === "admin"
+                          : r.type === "user"
                     )
                     .map((r) => (
                       <button
                         key={`${r.type}-${r.email}`}
                         type="button"
                         onClick={() => removeRecipient(r.email)}
-                        className="text-xs bg-gray-100 border rounded-full px-3 py-1 hover:bg-gray-200"
+                        className="rounded-full border bg-gray-100 px-3 py-1 text-xs hover:bg-gray-200"
                       >
                         {r.email} x
                       </button>
@@ -241,65 +263,79 @@ export default function EmailMarketing() {
 
           {form.target === "users" && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                User IDs (optionnel, séparés par des virgules)
-              </label>
+              <label className="mb-1 block text-sm font-medium text-gray-700">User IDs (optional, comma-separated)</label>
               <input
                 type="text"
                 value={form.userIds}
                 onChange={(e) => onChange("userIds", e.target.value)}
-                className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                className="w-full rounded border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-300"
                 placeholder="ex: 12, 15, 33"
               />
             </div>
           )}
 
+          {form.target === "admins" && (
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700">Admin IDs (optional, comma-separated)</label>
+              <input
+                type="text"
+                value={form.adminIds}
+                onChange={(e) => onChange("adminIds", e.target.value)}
+                className="w-full rounded border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                placeholder="ex: 1, 2"
+              />
+            </div>
+          )}
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Template email
-            </label>
-            <select
-              value={form.templateId}
-              onChange={(e) => onSelectTemplate(e.target.value)}
-              className="w-full border rounded px-3 py-2 bg-white"
-            >
-              <option value="">{templateLoading ? "Chargement..." : "Aucun template"}</option>
-              {templates.map((tpl) => (
-                <option key={tpl.id} value={tpl.id}>
-                  {tpl.name} ({tpl.type})
-                </option>
-              ))}
-            </select>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Email template</label>
+            <div className="flex gap-2">
+              <select
+                value={form.templateId}
+                onChange={(e) => onSelectTemplate(e.target.value)}
+                className="w-full rounded border bg-white px-3 py-2"
+              >
+                <option value="">{templateLoading ? "Loading..." : "No template"}</option>
+                {templates.map((tpl) => (
+                  <option key={tpl.id} value={tpl.id}>
+                    {tpl.name} ({tpl.type})
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => navigate("/admin/all-templates")}
+                className="rounded border bg-gray-100 px-3 py-2 text-sm hover:bg-gray-200"
+              >Manage</button>
+            </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Contenu (HTML autorisé)
-            </label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Content (HTML allowed)</label>
             <textarea
               rows={8}
               value={form.content}
               onChange={(e) => onChange("content", e.target.value)}
-              required
-              className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-300"
-              placeholder="<h1>Bonjour !</h1><p>Offre spéciale...</p>"
+              required={!form.templateId}
+              className="w-full rounded border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-300"
+              placeholder="<h1>Hello!</h1><p>Special offer...</p>"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="bg-gray-900 text-white rounded px-5 py-2 hover:bg-gray-800 disabled:opacity-60"
+            className="rounded bg-gray-900 px-5 py-2 text-white hover:bg-gray-800 disabled:opacity-60"
           >
-            {loading ? "Envoi..." : "Envoyer"}
+            {loading ? "Sending..." : "Send"}
           </button>
         </form>
       </div>
 
       <NotifyError message={error} onClose={() => setError(null)} isVisible={!!error} />
-      {success && (
-        <NotifySuccess message={success} sucess={true} onClose={() => setSuccess(null)} />
-      )}
+      {success && <NotifySuccess message={success} sucess={true} onClose={() => setSuccess(null)} />}
     </div>
   );
 }
+
+

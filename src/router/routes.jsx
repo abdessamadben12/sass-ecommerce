@@ -49,6 +49,8 @@ import TopProductsReport from "../roles/admin/Reports/TopProductsReport";
 import ActivityLogs from "../roles/admin/Logs/ActivityLogs";
 import AdminProfile from "../roles/admin/Profile/AdminProfile";
 import Notifications from "../roles/admin/Notification/Notifications";
+import AllProfits from "../roles/admin/Profits/AllProfits";
+import ProfitDetail from "../roles/admin/Profits/ProfitDetail";
 import Login from "../Auth/Login";
 import RequireAuth from "../Auth/RequireAuth";
 import ForgotPassword from "../Auth/ForgotPassword";
@@ -96,6 +98,7 @@ export default function  AppRouter(){
       <Route path="all-categories" element={<AllCategory/>}/>
       <Route path="add-category" element={<AddCategory/>}/>
       <Route path="edit-category/:id" element={<EditCategory/>}/>
+      <Route path="all-template" element={<AllTemplate/>}/>
       <Route path="all-templates" element={<AllTemplate/>}/>
       <Route path="templates-update/:id" element={<TemplateUpdateForm/>}/>
       <Route path="setting-create-templates" element={<TemplateCreator/>}/>
@@ -122,6 +125,9 @@ export default function  AppRouter(){
       <Route path="top-products-report" element={<TopProductsReport/>}/>
       {/* logs */}
       <Route path="activity-logs" element={<ActivityLogs/>}/>
+      {/* profits */}
+      <Route path="profits" element={<AllProfits/>}/>
+      <Route path="profits/:id" element={<ProfitDetail/>}/>
       {/* admin profile & notifications */}
       <Route path="profile" element={<AdminProfile/>}/>
       <Route path="notifications" element={<Notifications/>}/>

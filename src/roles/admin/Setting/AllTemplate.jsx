@@ -1,118 +1,157 @@
-import React, { useState, useEffect, use } from 'react';
-import { Copy, Eye, FileText, Trash2, Share2, Download, X } from 'lucide-react';
-import { getTemplates } from '../../../services/ServicesAdmin/TemplateService';
+import { useEffect, useMemo, useState } from 'react';
+import { Eye, FileText, Pencil, Send, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { deleteTemplate, getTemplates } from '../../../services/ServicesAdmin/TemplateService';
 import Pagination from '../../../components/ui/pagination';
 import Loading from '../../../components/ui/loading';
 import CardConfirmation from '../../../components/ui/CardConfirmation';
+import NotifyError from '../../../components/ui/NotifyError';
+import { NotifySuccess } from '../../../components/ui/NotifySucces';
+
 const AllTemplate = () => {
+  const navigate = useNavigate();
   const [templates, setTemplates] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
-  const [templateData, setTemplateData] = useState({});
-  const [copied, setCopied] = useState(false);
-  const [typeFilter, setTypeFilter] = useState(null);
-  const [loading,setLoading]=useState(false)
-  const [currentPage,setCurrentPage]=useState(1)
-  const [per_page,setPerPage]=useState(10)
-  const [total,setTotal]=useState(0)
-  const [error,setError]=useState(null)
-  const [sucess,setSuccess]=useState(null)
-  const [modelConfim,setModelConfim]=useState(false)
-  const navigate=useNavigate()
-  const type=[
-    {label:"Email",value:"mail"},
-    {label:"Email",value:"mail"},
-    {label:"Email",value:"mail"},
-  ]
-  // Charger les templates
+  const [typeFilter, setTypeFilter] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [openDeleteModal, setOpenDeleteModal] = useState(false);
+
   useEffect(() => {
-    setLoading(true)
-   const ftechData=async()=>{
-    const res=await getTemplates()
-    setCurrentPage(res.current_page)
-   setTotal(res.last_page)
-   setPerPage(res.per_page)
-   setTemplates(res.data)
-   setLoading(false)
-   console.log(templates)
+    let isMounted = true;
 
-   }
-   ftechData()
-  }, [currentPage,per_page,typeFilter]);
+    const fetchData = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const res = await getTemplates(typeFilter || null, () => {}, currentPage, perPage);
+        const items = Array.isArray(res?.data) ? res.data : [];
 
-  // Supprimer un template
-  const deleteTemplate = (id) => {
-   
-    //   const updatedTemplates = templates.filter(t => t.id !== id);
-    //   setTemplates(updatedTemplates);
-    //   saveToStorage(updatedTemplates);
-    //   setSelectedTemplate(null);
-      alert(id)
+        if (!isMounted) return;
+        setTemplates(items);
+        setCurrentPage(Number(res?.current_page || currentPage));
+        setPerPage(Number(res?.per_page || perPage));
+        setTotalPages(Number(res?.last_page || 1));
+      } catch (err) {
+        if (!isMounted) return;
+        setError(err?.response?.data?.message || err?.message || 'Erreur de chargement des templates.');
+        setTemplates([]);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
 
-    
+    fetchData();
+    return () => {
+      isMounted = false;
+    };
+  }, [typeFilter, currentPage, perPage]);
+
+  const typeOptions = useMemo(() => {
+    const values = new Set((templates || []).map((t) => t?.type).filter(Boolean));
+    return Array.from(values).sort();
+  }, [templates]);
+
+  const handleDelete = async () => {
+    if (!selectedTemplate) return;
+    try {
+      await deleteTemplate(selectedTemplate.id);
+      setOpenDeleteModal(false);
+      setTemplates((prev) => prev.filter((item) => item.id !== selectedTemplate.id));
+      setSuccess('Template supprime avec succes.');
+      setSelectedTemplate(null);
+    } catch (err) {
+      setOpenDeleteModal(false);
+      setError(err?.response?.data?.message || err?.message || 'Erreur lors de la suppression.');
+    }
   };
 
-  // Remplacer les variables
-  const renderTemplate = (template, data) => {
-    let rendered = template.content;
-    template.variables.forEach(variable => {
-      const value = data[variable] || `{{${variable}}}`;
-      rendered = rendered.replace(new RegExp(`\\{\\{${variable}\\}\\}`, 'g'), value);
-    });
-    return rendered;
-  };
-
-  // Copier le texte
-  const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  if (loading) return <Loading />;
 
   return (
-   loading ? <Loading/>: <div className="max-w-4xl mx-auto p-6 relative">
-      <h1 className="text-2xl font-bold mb-6">Mes Templates</h1>
-      
-      {/* Liste des templates */}
+    <div className="mx-auto max-w-5xl p-6">
+      <h1 className="mb-6 text-2xl font-bold">Mes Templates</h1>
+
+      <div className="mb-4 flex flex-wrap justify-end gap-3">
+        <button
+          onClick={() => navigate('/admin/setting-create-templates')}
+          className="rounded bg-blue-600 p-2 text-sm font-semibold text-white hover:bg-blue-700"
+          type="button"
+        >
+          Add Template
+        </button>
+
+        <select
+          className="rounded border border-gray-300 p-2 text-sm font-semibold"
+          value={typeFilter}
+          onChange={(e) => {
+            setTypeFilter(e.target.value);
+            setCurrentPage(1);
+          }}
+        >
+          <option value="">All Types</option>
+          {typeOptions.map((type) => (
+            <option key={type} value={type}>
+              {type}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <div className="space-y-4">
-        <div className='flex justify-end gap-4 '>
-            <button
-            onClick={()=>navigate("/admin/setting-create-templates")}
-             className='p-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-semibold'>Add Template</button>
-            <select className='p-3 rounded font-semibold' onChange={(e)=>setTypeFilter(e.target.value)} name="" id="">
-            <option value={null}>All Status</option>
-
-                {type.map((item,key)=><option key={key} value={item.value}>{item.label}</option>)}
-
-            </select>
-        </div>
-        {templates?.map(template => (
-          <div key={template.id} className="bg-white border rounded-lg p-4 hover:shadow-md transition-shadow">
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <h3 className="font-semibold text-lg mb-2">{template.name}</h3>
-                <p className="text-gray-600 text-sm mb-2 'line-clamp-2">{template.content}</p>
-                {template.variables.length > 0 && (
-                  <p className="text-xs text-gray-500">
-                    Variables: {template.variables.join(', ')}
-                  </p>
+        {templates.map((template) => (
+          <div key={template.id} className="rounded-lg border bg-white p-4 transition-shadow hover:shadow-md">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0 flex-1">
+                <h3 className="mb-2 text-lg font-semibold">{template.name}</h3>
+                <p className="mb-2 line-clamp-2 text-sm text-gray-600">{template.content}</p>
+                {Array.isArray(template.variables) && template.variables.length > 0 && (
+                  <p className="text-xs text-gray-500">Variables: {template.variables.join(', ')}</p>
                 )}
-                <span className='text-sm font-sm mt-2 bg-slate-300 px-2 py-1 translate-y-2 block w-fit rounded-full'>{template.type}</span>
+                <span className="mt-2 inline-block w-fit rounded-full bg-slate-300 px-2 py-1 text-sm">
+                  {template.type}
+                </span>
               </div>
-              <div className="ml-4 flex gap-2">
+
+              <div className="ml-2 flex gap-2">
                 <button
-                  onClick={()=>navigate("/admin/detaill-template/"+template.id)}
-                  className="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 flex items-center gap-1"
+                  onClick={() => navigate(`/admin/templates-update/${template.id}`)}
+                  className="flex items-center gap-1 rounded bg-indigo-500 px-3 py-1 text-sm text-white hover:bg-indigo-600"
+                  type="button"
                 >
-                  <Eye className="w-3 h-3" />
+                  <Pencil className="h-3 w-3" />
+                  Edit
+                </button>
+                <button
+                  onClick={() => navigate(`/admin/detaill-template/${template.id}`)}
+                  className="flex items-center gap-1 rounded bg-blue-500 px-3 py-1 text-sm text-white hover:bg-blue-600"
+                  type="button"
+                >
+                  <Eye className="h-3 w-3" />
                   View
                 </button>
                 <button
-                  onClick={() => setModelConfim(true)}
-                  className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600 flex items-center gap-1"
-                  title="Supprimer"
+                  onClick={() => navigate(`/admin/email-marketing?template_id=${template.id}`)}
+                  className="flex items-center gap-1 rounded bg-emerald-500 px-3 py-1 text-sm text-white hover:bg-emerald-600"
+                  type="button"
                 >
-                  <Trash2 className="w-3 h-3" />
+                  <Send className="h-3 w-3" />
+                  Mail
+                </button>
+                <button
+                  onClick={() => {
+                    setSelectedTemplate(template);
+                    setOpenDeleteModal(true);
+                  }}
+                  className="flex items-center gap-1 rounded bg-red-500 px-3 py-1 text-sm text-white hover:bg-red-600"
+                  title="Supprimer"
+                  type="button"
+                >
+                  <Trash2 className="h-3 w-3" />
                   Supprimer
                 </button>
               </div>
@@ -121,24 +160,34 @@ const AllTemplate = () => {
         ))}
       </div>
 
-      {templates?.length === 0 && (
-        <div className="text-center py-12 text-gray-500">
-          <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+      {templates.length === 0 && !error && (
+        <div className="py-12 text-center text-gray-500">
+          <FileText className="mx-auto mb-3 h-12 w-12 text-gray-300" />
           <p>Aucun template disponible</p>
         </div>
       )}
 
-      {/* Modal d'utilisation */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={Math.max(1, totalPages)}
+        setCurrentPage={setCurrentPage}
+        perPage={perPage}
+        setPerPage={(value) => setPerPage(Number(value))}
+      />
 
-      <Pagination currentPage={currentPage} totalPages={total} setCurrentPage={currentPage} perPage={per_page} setPerPage={setPerPage}/>
-      {modelConfim && <CardConfirmation title={"Delete This Template Permanently"} message={"Are you sure you want to delete this template? This action cannot be undone."}
-         confirmed={()=>deleteTemplate(selectedTemplate.id)} isVisible={setModelConfim}
-       nameButton={"Delete Template"}/>}
-       
-       {sucess?.etats && <NotifySuccess sucess={sucess.etats} message={sucess.message} onClose={() => setSuccess(false)} />}   
-       
+      {openDeleteModal && selectedTemplate && (
+        <CardConfirmation
+          title="Delete This Template Permanently"
+          message="Are you sure you want to delete this template? This action cannot be undone."
+          confirmed={handleDelete}
+          isVisible={setOpenDeleteModal}
+          nameButton="Delete Template"
+        />
+      )}
 
-    </div> 
+      <NotifyError message={error} onClose={() => setError('')} isVisible={!!error} />
+      {success && <NotifySuccess sucess={true} message={success} onClose={() => setSuccess('')} />}
+    </div>
   );
 };
 

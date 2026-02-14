@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Settings,
   Mail,
@@ -32,15 +33,18 @@ import {
   uploadLogo,
   uploadFavicon,
 } from "../../../services/ServicesAdmin/SettingsService";
+import { getTemplates } from "../../../services/ServicesAdmin/TemplateService";
 import NotifyError from "../../../components/ui/NotifyError";
 import { NotifySuccess } from "../../../components/ui/NotifySucces";
 import { useAppSettings } from "../../../context/AppSettingsContext";
 
 export default function GeneralSetting() {
+  const navigate = useNavigate();
   const { refreshSettings } = useAppSettings();
   const [tab, setTab] = useState("general");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [emailTemplates, setEmailTemplates] = useState([]);
 
   const generalDefaults = {
     app_name: "", app_url: "", frontend_url: "", support_email: "",
@@ -81,6 +85,7 @@ export default function GeneralSetting() {
     meta_keywords: "",
     canonical_base: "",
     robots: "index,follow",
+    robots_url: "",
     sitemap_url: "",
   };
 
@@ -108,6 +113,11 @@ export default function GeneralSetting() {
           getMaintenanceSettings(),
           getSeoSettings(),
         ]);
+        const templatesRes = await getTemplates(null, () => {});
+        const templatesItems = templatesRes?.data || [];
+        setEmailTemplates(
+          templatesItems.filter((tpl) => String(tpl?.type || "").startsWith("email_"))
+        );
         setGeneral({ ...generalDefaults, ...g });
         setEmail({ ...emailDefaults, ...e });
         setCommission({ ...commissionDefaults, ...c });
@@ -237,6 +247,14 @@ export default function GeneralSetting() {
   const saveSeo = async () => {
     setError(""); setSuccess("");
     try {
+      if (seo.robots_url && !/^https?:\/\/.+/i.test(seo.robots_url)) {
+        setError("Robots File URL must start with http:// or https://");
+        return;
+      }
+      if (seo.sitemap_url && !/^https?:\/\/.+/i.test(seo.sitemap_url)) {
+        setError("Sitemap File URL must start with http:// or https://");
+        return;
+      }
       await updateSeoSettings(seo);
       setSuccess("SEO enregistré.");
     } catch (err) { setError(err?.response?.data?.message || err.message); }
@@ -248,6 +266,7 @@ export default function GeneralSetting() {
     { id: "policies", label: "Politiques", icon: <Globe size={18} /> },
     { id: "email", label: "Email", icon: <Mail size={18} /> },
     { id: "notifications", label: "Notifications", icon: <Mail size={18} /> },
+    { id: "email_templates", label: "Templates Email", icon: <Mail size={18} /> },
     { id: "maintenance", label: "Maintenance", icon: <Settings size={18} /> },
     { id: "seo", label: "SEO", icon: <Globe size={18} /> },
     { id: "commission", label: "Commission", icon: <Percent size={18} /> },
@@ -340,6 +359,54 @@ export default function GeneralSetting() {
               </Section>
             )}
 
+            {tab === "email_templates" && (
+              <Section title="Templates Email" icon={<Mail className="text-[#008ECC]" />}>
+                <div className="md:col-span-2 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                  <p className="text-sm text-gray-700">
+                    Gerer les templates utilises par le module Email Marketing.
+                  </p>
+                  <p className="mt-2 text-xs text-gray-500">
+                    Templates email trouves: <span className="font-semibold">{emailTemplates.length}</span>
+                  </p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => navigate("/admin/all-templates")}
+                      className="rounded-lg bg-[#008ECC] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0077aa]"
+                    >
+                      Voir tous les templates
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => navigate("/admin/setting-create-templates")}
+                      className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100"
+                    >
+                      Creer un template email
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => navigate("/admin/email-marketing")}
+                      className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100"
+                    >
+                      Ouvrir Email Marketing
+                    </button>
+                  </div>
+                </div>
+
+                <div className="md:col-span-2 space-y-2">
+                  {emailTemplates.slice(0, 8).map((tpl) => (
+                    <div key={tpl.id} className="rounded-lg border border-gray-200 bg-white p-3">
+                      <p className="text-sm font-semibold text-gray-800">{tpl.name}</p>
+                      <p className="text-xs text-gray-500">{tpl.type}</p>
+                    </div>
+                  ))}
+                  {emailTemplates.length === 0 && (
+                    <p className="text-sm text-gray-500">Aucun template email configure.</p>
+                  )}
+                </div>
+              </Section>
+            )}
+
             {tab === "commission" && (
               <Section title="Gestion des Commissions" icon={<Percent className="text-[#008ECC]" />}>
                 <Field label="Part Plateforme (%)" type="number" value={commission.platform_percent} onChange={(v) => setCommission({ ...commission, platform_percent: v })} />
@@ -387,16 +454,16 @@ export default function GeneralSetting() {
 
             {tab === "notifications" && (
               <Section title="Notifications & Emails" icon={<Mail className="text-[#008ECC]" />}>
-                <Field label="Alertes activées (true/false)" value={notifications.alerts_enabled} onChange={(v) => setNotifications({ ...notifications, alerts_enabled: v })} />
+                <BooleanField label="Alertes activ?es" value={notifications.alerts_enabled} onChange={(v) => setNotifications({ ...notifications, alerts_enabled: v })} />
                 <Field label="Email des alertes" value={notifications.alerts_email} onChange={(v) => setNotifications({ ...notifications, alerts_email: v })} />
-                <Field label="Emails système (true/false)" value={notifications.system_emails_enabled} onChange={(v) => setNotifications({ ...notifications, system_emails_enabled: v })} />
+                <BooleanField label="Emails syst?me" value={notifications.system_emails_enabled} onChange={(v) => setNotifications({ ...notifications, system_emails_enabled: v })} />
                 <SaveButton onClick={saveNotifications} />
               </Section>
             )}
 
             {tab === "maintenance" && (
               <Section title="Maintenance" icon={<Settings className="text-[#008ECC]" />}>
-                <Field label="Mode maintenance (true/false)" value={maintenance.maintenance_mode} onChange={(v) => setMaintenance({ ...maintenance, maintenance_mode: v })} />
+                <BooleanField label="Mode maintenance" value={maintenance.maintenance_mode} onChange={(v) => setMaintenance({ ...maintenance, maintenance_mode: v })} />
                 <TextArea label="Message de maintenance" value={maintenance.maintenance_message} onChange={(v) => setMaintenance({ ...maintenance, maintenance_message: v })} />
                 <SaveButton onClick={saveMaintenance} />
               </Section>
@@ -408,8 +475,9 @@ export default function GeneralSetting() {
                 <TextArea label="Meta Description" value={seo.meta_description} onChange={(v) => setSeo({ ...seo, meta_description: v })} />
                 <Field label="Meta Keywords" value={seo.meta_keywords} onChange={(v) => setSeo({ ...seo, meta_keywords: v })} />
                 <Field label="Canonical Base" value={seo.canonical_base} onChange={(v) => setSeo({ ...seo, canonical_base: v })} />
-                <Field label="Robots" value={seo.robots} onChange={(v) => setSeo({ ...seo, robots: v })} />
-                <Field label="Sitemap URL" value={seo.sitemap_url} onChange={(v) => setSeo({ ...seo, sitemap_url: v })} />
+                <Field label="Robots Meta (index,follow)" value={seo.robots} onChange={(v) => setSeo({ ...seo, robots: v })} />
+                <Field label="Robots File URL" value={seo.robots_url} onChange={(v) => setSeo({ ...seo, robots_url: v })} />
+                <Field label="Sitemap File URL" value={seo.sitemap_url} onChange={(v) => setSeo({ ...seo, sitemap_url: v })} />
                 <SaveButton onClick={saveSeo} />
               </Section>
             )}
@@ -483,6 +551,21 @@ function Field({ label, value, onChange, type = "text" }) {
   );
 }
 
+function BooleanField({ label, value, onChange }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label className="text-sm font-semibold text-gray-700">{label}</label>
+      <select
+        className="border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#008ECC]/20 focus:border-[#008ECC] outline-none transition-all bg-white"
+        value={String(value ?? "true")}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        <option value="true">true</option>
+        <option value="false">false</option>
+      </select>
+    </div>
+  );
+}
 function SaveButton({ onClick }) {
   return (
     <div className="md:col-span-2 flex justify-end mt-4 pt-4 border-t border-gray-100">

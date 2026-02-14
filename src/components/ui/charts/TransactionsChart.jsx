@@ -11,6 +11,8 @@ import {
 } from 'recharts';
 import DateRangePicker from '../DateRangePicker';
 import { getChartTransaction } from '../../../services/ServicesAdmin/ServicesDashbord';
+import Loading from '../loading';
+import NotifyError from '../NotifyError';
 
 const TransactionsReport = () => {
   const [linesVisibility, setLinesVisibility] = useState({
@@ -20,6 +22,8 @@ const TransactionsReport = () => {
 
   const [rawData, setRowData] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const formatDate = (date) => {
     if (!date) return null;
@@ -33,19 +37,27 @@ const TransactionsReport = () => {
 
   useEffect(() => {
     async function fetchData() {
-      if (!selectedDate) {
-        const res = await getChartTransaction();
+      setLoading(true);
+      setError(null);
+      try {
+        if (!selectedDate) {
+          const res = await getChartTransaction();
+          setRowData(res);
+          return;
+        }
+
+        const from = formatDate(selectedDate.from);
+        const to = formatDate(selectedDate.to);
+
+        if (!from || !to) return;
+
+        const res = await getChartTransaction(from, to);
         setRowData(res);
-        return;
+      } catch (err) {
+        setError(err?.response?.data?.message || err?.message || 'Failed to load transaction report.');
+      } finally {
+        setLoading(false);
       }
-
-      const from = formatDate(selectedDate.from);
-      const to = formatDate(selectedDate.to);
-
-      if (!from || !to) return;
-
-      const res = await getChartTransaction(from, to);
-      setRowData(res);
     }
 
     fetchData();
@@ -99,9 +111,12 @@ const TransactionsReport = () => {
     }
   };
 
+  if (loading) return <Loading />;
+
   return (
-    <div className="w-full">
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200">
+    <>
+      <div className="w-full">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200">
         <div className="p-6 border-b border-slate-200">
           <h1 className="text-2xl font-semibold text-gray-800 mb-4">Rapport des Transactions</h1>
 
@@ -203,8 +218,10 @@ const TransactionsReport = () => {
             </div>
           </div>
         </div>
+        </div>
       </div>
-    </div>
+      <NotifyError message={error} onClose={() => setError(null)} isVisible={!!error} />
+    </>
   );
 };
 

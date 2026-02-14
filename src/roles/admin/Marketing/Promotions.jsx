@@ -33,7 +33,7 @@ export default function Promotions() {
       setForm({ name: "", type: "banner", status: "draft", starts_at: "", ends_at: "" });
       load();
     } catch (err) {
-      setError(err?.response?.data?.message || "Erreur.");
+      setError(err?.response?.data?.message || "Error.");
     }
   };
 
@@ -50,7 +50,7 @@ export default function Promotions() {
         <form onSubmit={submit} className="grid grid-cols-1 md:grid-cols-5 gap-3">
           <input
             className="border rounded px-3 py-2"
-            placeholder="Nom"
+            placeholder="Name"
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             required
@@ -82,9 +82,7 @@ export default function Promotions() {
             value={form.starts_at}
             onChange={(e) => setForm({ ...form, starts_at: e.target.value })}
           />
-          <button className="bg-gray-900 text-white rounded px-3 py-2">
-            Ajouter
-          </button>
+          <button className="bg-[#008ECC] text-white rounded px-3 py-2">Add</button>
         </form>
         {error ? <div className="text-sm text-red-600 mt-2">{error}</div> : null}
       </div>
@@ -93,10 +91,10 @@ export default function Promotions() {
         <table className="min-w-full text-sm">
           <thead>
             <tr className="text-left text-gray-500 border-b">
-              <th className="py-2">Nom</th>
+              <th className="py-2">Name</th>
               <th className="py-2">Type</th>
-              <th className="py-2">Statut</th>
-              <th className="py-2">Début</th>
+              <th className="py-2">Status</th>
+              <th className="py-2">Start Date</th>
               <th className="py-2">Actions</th>
             </tr>
           </thead>
@@ -111,16 +109,14 @@ export default function Promotions() {
                   <button
                     className="text-red-600 text-xs"
                     onClick={() => remove(p.id)}
-                  >
-                    Supprimer
-                  </button>
+                  >Delete</button>
                 </td>
               </tr>
             ))}
             {items.length === 0 ? (
               <tr>
                 <td colSpan={5} className="py-4 text-center text-gray-500">
-                  Aucun élément.
+                  No items found.
                 </td>
               </tr>
             ) : null}
@@ -130,3 +126,4 @@ export default function Promotions() {
     </div>
   );
 }
+

@@ -9,3 +9,8 @@ export const searchMarketingRecipients = async (type, query) =>
       params: { type, q: query },
     })
     .then((res) => res.data);
+
+export const getMarketingEmailTemplates = async () =>
+  axiosConfig
+    .get("/admin/templates/get-templates", { params: { per_page: 100 } })
+    .then((res) => res.data);

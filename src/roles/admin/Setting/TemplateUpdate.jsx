@@ -17,7 +17,7 @@ const TemplateUpdateForm = () => {
     name: '',
     description: '',
     content: '',
-    type: 'email',
+    type: 'email_campaign',
     category: '',
     tags: [],
     version: '1.0',
@@ -37,13 +37,18 @@ const TemplateUpdateForm = () => {
 
   // Types de templates disponibles
   const templateTypes = [
-    { value: 'email', label: 'Email' },
-    { value: 'facture', label: 'Facture' },
-    { value: 'notification', label: 'Notification' },
-    { value: 'commande', label: 'Commande' },
-    { value: 'rapport', label: 'Rapport' },
-    { value: 'contrat', label: 'Contrat' },
-    { value: 'autre', label: 'Autre' }
+    { value: 'email_welcome', label: 'Email bienvenue' },
+    { value: 'email_notification', label: 'Email notification' },
+    { value: 'email_campaign', label: 'Email campaign' },
+    { value: 'email_admin', label: 'Email admin' },
+    { value: 'email_reset_password', label: 'Email reset password' },
+    { value: 'email_order_confirmation', label: 'Email confirmation commande' },
+    { value: 'invoice', label: 'Facture' },
+    { value: 'quote', label: 'Devis' },
+    { value: 'receipt', label: 'Recu' },
+    { value: 'pdf_report', label: 'Rapport PDF' },
+    { value: 'web_header', label: 'Web header' },
+    { value: 'web_footer', label: 'Web footer' },
   ];
   // Charger le template existant
   useEffect(() => {

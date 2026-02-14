@@ -33,7 +33,7 @@ export default function Coupons() {
       setForm({ code: "", type: "percent", value: 0, status: "draft", applies_to: "all" });
       load();
     } catch (err) {
-      setError(err?.response?.data?.message || "Erreur.");
+      setError(err?.response?.data?.message || "Error.");
     }
   };
 
@@ -79,9 +79,7 @@ export default function Coupons() {
             <option value="disabled">Disabled</option>
             <option value="expired">Expired</option>
           </select>
-          <button className="bg-gray-900 text-white rounded px-3 py-2">
-            Ajouter
-          </button>
+          <button className="bg-[#008ECC] text-white rounded px-3 py-2">Add</button>
         </form>
         {error ? <div className="text-sm text-red-600 mt-2">{error}</div> : null}
       </div>
@@ -92,8 +90,8 @@ export default function Coupons() {
             <tr className="text-left text-gray-500 border-b">
               <th className="py-2">Code</th>
               <th className="py-2">Type</th>
-              <th className="py-2">Valeur</th>
-              <th className="py-2">Statut</th>
+              <th className="py-2">Value</th>
+              <th className="py-2">Status</th>
               <th className="py-2">Actions</th>
             </tr>
           </thead>
@@ -108,16 +106,14 @@ export default function Coupons() {
                   <button
                     className="text-red-600 text-xs"
                     onClick={() => remove(c.id)}
-                  >
-                    Supprimer
-                  </button>
+                  >Delete</button>
                 </td>
               </tr>
             ))}
             {items.length === 0 ? (
               <tr>
                 <td colSpan={5} className="py-4 text-center text-gray-500">
-                  Aucun élément.
+                  No items found.
                 </td>
               </tr>
             ) : null}
@@ -127,3 +123,4 @@ export default function Coupons() {
     </div>
   );
 }
+
