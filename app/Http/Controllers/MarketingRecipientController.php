@@ -12,7 +12,7 @@ class MarketingRecipientController extends Controller
     {
         $data = $request->validate([
             'q' => 'nullable|string',
-            'type' => 'required|in:subscribers,users',
+            'type' => 'required|in:subscribers,users,admins',
             'limit' => 'nullable|integer|min:1|max:20',
         ]);
 
@@ -30,6 +30,24 @@ class MarketingRecipientController extends Controller
             return response()->json([
                 'items' => $rows->map(fn($r) => [
                     'type' => 'subscriber',
+                    'email' => $r->email,
+                ])
+            ]);
+        }
+
+        if ($data['type'] === 'admins') {
+            $rows = User::query()
+                ->select('id', 'email')
+                ->where('role', 'admin')
+                ->when($query !== '', fn($q) => $q->where('email', 'like', "%{$query}%"))
+                ->orderBy('email')
+                ->limit($limit)
+                ->get();
+
+            return response()->json([
+                'items' => $rows->map(fn($r) => [
+                    'type' => 'admin',
+                    'id' => $r->id,
                     'email' => $r->email,
                 ])
             ]);

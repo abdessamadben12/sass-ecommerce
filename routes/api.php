@@ -28,6 +28,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\SubscribersController;
 use App\Http\Controllers\ReportsController;
+use App\Http\Controllers\ProfitController;
 
 
 /*
@@ -51,7 +52,7 @@ Route::prefix('auth')->group(function () {
     Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 });
-Route::middleware(['auth:sanctum','admin'])->group(function () {
+Route::middleware(['auth:sanctum','admin','log.admin.activity'])->group(function () {
 Route::get('/admin/userAnnalyse', [AdminController::class, 'getAnnalyseUser'])->name('admin.userAnnalyse');
 Route::get('/admin/dashboard/overview', [AdminController::class, 'dashboardOverview'])->name('admin.dashboard.overview');
 Route::get('/admin/depositAnalyse', [AdminController::class, 'getAnnalyseDeposit'])->name('admin.depositAnalyse');
@@ -101,6 +102,9 @@ Route::get("/admin/reports/users", [ReportsController::class, "users"])->name('a
 Route::get("/admin/reports/visitors", [ReportsController::class, "visitors"])->name('admin.reports.visitors');
 Route::get("/admin/reports/transactions", [ReportsController::class, "transactions"])->name('admin.reports.transactions');
 Route::get("/admin/reports/top-products", [ReportsController::class, "topProducts"])->name('admin.reports.top-products');
+// profits
+Route::get("/admin/profits", [ProfitController::class, "index"])->name('admin.profits.index');
+Route::get("/admin/profits/{seller}", [ProfitController::class, "show"])->name('admin.profits.show');
 // marketing modules
 Route::prefix('/admin/marketing')->group(function () {
     Route::get('/promotions', [PromotionController::class, 'index']);
@@ -180,6 +184,7 @@ Route::prefix('/admin/templates')->group(function () {
     Route::get('/get-templates', [TemplateController::class, 'index']);
     Route::post('/create-template', [TemplateController::class, 'store']);
     Route::put('/update-template/{id}', [TemplateController::class, 'update']);
+    Route::delete('/delete-template/{id}', [TemplateController::class, 'destroy']);
     Route::get('/type/{type}', [TemplateController::class, 'byType']);
     Route::get('/{template}', [TemplateController::class, 'show']);
     Route::get('/{template}/preview', [TemplateController::class, 'preview']);
@@ -189,5 +194,3 @@ Route::get('/pdf', [TemplateController::class, 'renderPdf']);
 });
 
 require __DIR__.'/product.php';
-
-

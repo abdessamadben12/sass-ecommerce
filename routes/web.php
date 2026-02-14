@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\Seller\SellerOnboardingController;
 
 /*
 |--------------------------------------------------------------------------
@@ -10,45 +12,13 @@ use Illuminate\Http\Request;
 |--------------------------------------------------------------------------
 */
 
-Route::get('/', function () {
-    return view('welcome');
+Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::middleware(['auth', 'seller.web'])->prefix('seller')->name('seller.')->group(function () {
+    Route::get('/', function () {
+        return redirect()->route('seller.onboarding.index');
+    })->name('home');
+
+    Route::get('/onboarding', [SellerOnboardingController::class, 'index'])->name('onboarding.index');
+    Route::post('/onboarding/steps/{stepKey}', [SellerOnboardingController::class, 'updateStep'])->name('onboarding.steps.update');
+    Route::post('/onboarding/guide/complete', [SellerOnboardingController::class, 'completeGuide'])->name('onboarding.guide.complete');
 });
-
-Route::get('/login', function () {
-    return view('auth.login', ['role' => 'buyer']);
-})->name('login');
-
-Route::get('/login/buyer', function () {
-    return view('auth.login', ['role' => 'buyer']);
-})->name('login.buyer');
-
-Route::get('/login/seller', function () {
-    return view('auth.login', ['role' => 'seller']);
-})->name('login.seller');
-
-Route::post('/login', function (Request $request) {
-    $validated = $request->validate([
-        'email' => 'required|email',
-        'password' => 'required|string',
-        'role' => 'required|in:buyer,seller',
-    ]);
-
-    if (Auth::attempt([
-        'email' => $validated['email'],
-        'password' => $validated['password'],
-        'role' => $validated['role'],
-        'status' => 'active',
-    ])) {
-        $request->session()->regenerate();
-        return redirect('/')->with('status', 'Login successful');
-    }
-
-    return back()->withErrors(['email' => 'Invalid credentials or role'])->withInput();
-})->name('login.submit');
-
-Route::post('/logout', function (Request $request) {
-    Auth::logout();
-    $request->session()->invalidate();
-    $request->session()->regenerateToken();
-    return redirect('/login');
-})->name('logout');

@@ -12,6 +12,27 @@ use Illuminate\Support\Facades\Storage;
 
 class SettingsController extends Controller
 {
+    private function normalizeBooleanLike($value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if (is_bool($value)) {
+            return $value ? 'true' : 'false';
+        }
+
+        $normalized = strtolower(trim((string) $value));
+        if (in_array($normalized, ['1', 'true', 'yes', 'on'], true)) {
+            return 'true';
+        }
+        if (in_array($normalized, ['0', 'false', 'no', 'off'], true)) {
+            return 'false';
+        }
+
+        return null;
+    }
+
     private function maskSecret(?string $value): ?string
     {
         return $value ? '********' : null;
@@ -346,10 +367,22 @@ class SettingsController extends Controller
     public function updateNotifications(Request $request)
     {
         $data = $request->validate([
-            'alerts_enabled' => 'nullable|string',
+            'alerts_enabled' => 'nullable',
             'alerts_email' => 'nullable|email',
-            'system_emails_enabled' => 'nullable|string',
+            'system_emails_enabled' => 'nullable',
         ]);
+
+        foreach (['alerts_enabled', 'system_emails_enabled'] as $booleanKey) {
+            if (array_key_exists($booleanKey, $data)) {
+                $normalized = $this->normalizeBooleanLike($data[$booleanKey]);
+                if ($normalized === null) {
+                    return response()->json([
+                        'message' => "Invalid value for {$booleanKey}. Use true or false.",
+                    ], 422);
+                }
+                $data[$booleanKey] = $normalized;
+            }
+        }
 
         foreach ($data as $key => $value) {
             Setting::updateOrCreate(
@@ -383,9 +416,19 @@ class SettingsController extends Controller
     public function updateMaintenance(Request $request)
     {
         $data = $request->validate([
-            'maintenance_mode' => 'nullable|string',
+            'maintenance_mode' => 'nullable',
             'maintenance_message' => 'nullable|string',
         ]);
+
+        if (array_key_exists('maintenance_mode', $data)) {
+            $normalized = $this->normalizeBooleanLike($data['maintenance_mode']);
+            if ($normalized === null) {
+                return response()->json([
+                    'message' => 'Invalid value for maintenance_mode. Use true or false.',
+                ], 422);
+            }
+            $data['maintenance_mode'] = $normalized;
+        }
 
         foreach ($data as $key => $value) {
             Setting::updateOrCreate(
@@ -400,15 +443,17 @@ class SettingsController extends Controller
     public function getSeo()
     {
         $items = Setting::where('group', 'seo')->get()->pluck('value', 'key');
+        $defaults = [
+            'meta_title' => '',
+            'meta_description' => '',
+            'meta_keywords' => '',
+            'canonical_base' => '',
+            'robots' => 'index,follow',
+            'robots_url' => '',
+            'sitemap_url' => '',
+        ];
+
         if ($items->isEmpty()) {
-            $defaults = [
-                'meta_title' => '',
-                'meta_description' => '',
-                'meta_keywords' => '',
-                'canonical_base' => '',
-                'robots' => 'index,follow',
-                'sitemap_url' => '',
-            ];
             foreach ($defaults as $key => $value) {
                 Setting::updateOrCreate(
                     ['group' => 'seo', 'key' => $key],
@@ -416,6 +461,16 @@ class SettingsController extends Controller
                 );
             }
             $items = Setting::where('group', 'seo')->get()->pluck('value', 'key');
+        } else {
+            foreach ($defaults as $key => $value) {
+                if (!$items->has($key)) {
+                    Setting::updateOrCreate(
+                        ['group' => 'seo', 'key' => $key],
+                        ['value' => $value]
+                    );
+                    $items->put($key, $value);
+                }
+            }
         }
         return response()->json($items, 200);
     }
@@ -428,7 +483,8 @@ class SettingsController extends Controller
             'meta_keywords' => 'nullable|string',
             'canonical_base' => 'nullable|string|max:255',
             'robots' => 'nullable|string|max:50',
-            'sitemap_url' => 'nullable|string|max:255',
+            'robots_url' => 'nullable|url|max:255',
+            'sitemap_url' => 'nullable|url|max:255',
         ]);
 
         foreach ($data as $key => $value) {

@@ -13,6 +13,7 @@ use App\Models\Product;
 use App\Models\Withdrawal;
 use App\Models\Transaction;
 use App\Models\Notification;
+use App\Models\SellerOnboardingProgress;
 use App\Notifications\ResetPasswordNotification;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Notifications\Notifiable;
@@ -106,5 +107,9 @@ class User extends Authenticatable
  }
  public function details(){
     return $this->hasOne(User_detaill::class);
+ }
+ public function onboardingProgress()
+ {
+    return $this->hasOne(SellerOnboardingProgress::class, 'user_id', 'id');
  }
 }

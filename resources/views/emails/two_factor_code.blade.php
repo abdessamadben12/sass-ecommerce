@@ -20,7 +20,7 @@
                 <p style="margin:0 0 12px 0;font-size:16px;">Hi,</p>
                 <p style="margin:0 0 16px 0;font-size:14px;color:#334155;">
                   Use the following verification code to complete your sign-in. This code is valid for
-                  {{ $expiresaMinutes }} minutes.
+                  {{ $expiresMinutes }} minutes.
                 </p>
                 <div style="text-align:center;margin:20px 0;">
                   <span style="display:inline-block;padding:14px 22px;border:1px dashed #94a3b8;border-radius:8px;font-size:22px;letter-spacing:4px;font-weight:bold;color:#0f172a;">

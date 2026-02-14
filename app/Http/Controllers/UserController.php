@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Wallet;
 use Illuminate\Http\Request;
 use App\Services\MoneyService;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
@@ -14,6 +15,43 @@ use App\Http\Requests\UpdateUserRequest;
 
 class UserController extends Controller
 {
+    public function createAdmin(Request $request)
+    {
+        $data = $request->validate([
+            'name' => 'required|string|max:120',
+            'email' => 'required|email|max:255|unique:users,email',
+            'password' => 'required|string|min:8|max:255',
+        ]);
+
+        $user = DB::transaction(function () use ($data) {
+            $newAdmin = User::create([
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'password' => Hash::make($data['password']),
+                'role' => 'admin',
+                'status' => 'active',
+                'email_verified_at' => now(),
+            ]);
+
+            Wallet::firstOrCreate(
+                ['user_id' => $newAdmin->id],
+                ['balance' => 0]
+            );
+
+            return $newAdmin;
+        });
+
+        return response()->json([
+            'message' => 'Admin account created successfully.',
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
+            ],
+        ], 201);
+    }
+
     public function getActiveUsers(Request $request)
     {
     $perPage = $request->input('per_page', 10);

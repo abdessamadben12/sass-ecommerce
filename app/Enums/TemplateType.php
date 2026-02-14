@@ -12,6 +12,7 @@ enum TemplateType: string
     case EMAIL_WELCOME = 'email_welcome';
     case EMAIL_NOTIFICATION = 'email_notification';
     case EMAIL_CAMPAIGN = 'email_campaign';
+    case EMAIL_ADMIN = 'email_admin';
     case EMAIL_RESET_PASSWORD = 'email_reset_password';
     case EMAIL_ORDER_CONFIRMATION = 'email_order_confirmation';
     
@@ -45,6 +46,7 @@ enum TemplateType: string
             self::QUOTE => 'Devis',
             self::EMAIL_WELCOME => 'Email de bienvenue',
             self::EMAIL_NOTIFICATION => 'Email notification',
+            self::EMAIL_ADMIN => 'Email admin',
             self::WEB_FOOTER => 'Pied de page',
             self::PDF_REPORT => 'Rapport PDF',
             default => ucfirst(str_replace('_', ' ', $this->value))
@@ -56,7 +58,7 @@ enum TemplateType: string
         return match($this) {
             self::INVOICE, self::QUOTE, self::RECEIPT => 'documents',
             self::EMAIL_WELCOME, self::EMAIL_NOTIFICATION, 
-            self::EMAIL_CAMPAIGN, self::EMAIL_RESET_PASSWORD, 
+            self::EMAIL_CAMPAIGN, self::EMAIL_ADMIN, self::EMAIL_RESET_PASSWORD, 
             self::EMAIL_ORDER_CONFIRMATION => 'emails',
             self::SMS_NOTIFICATION, self::SMS_VERIFICATION, 
             self::PUSH_NOTIFICATION => 'notifications',

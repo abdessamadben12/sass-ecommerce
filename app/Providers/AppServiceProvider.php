@@ -2,12 +2,13 @@
 
 namespace App\Providers;
 
-use App\Services\MoneyService;
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Schema;
-use App\Models\Setting;
 use App\Models\EmailSetting;
+use App\Models\Setting;
 use App\Models\StorageSetting;
+use App\Services\MoneyService;
+use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -26,6 +27,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Blade::if('seller', function () {
+        return auth()->check() && auth()->user()->role === 'seller';
+    });
         try {
             if (Schema::hasTable('settings')) {
                 $general = Setting::where('group', 'general')->get()->pluck('value', 'key');

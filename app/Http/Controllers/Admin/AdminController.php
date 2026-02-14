@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\Deposit;
 use App\Models\Product;
 use App\Models\Withdrawal;
+use App\Models\CommissionSetting;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use App\Http\Controllers\Controller;
@@ -23,7 +24,7 @@ class AdminController extends Controller
                     SUM(CASE WHEN role != 'admin' THEN 1 ELSE 0 END) as total_users,
                     SUM(CASE WHEN role != 'admin' AND status = 'active' THEN 1 ELSE 0 END) as active_users,
                     SUM(CASE WHEN role != 'admin' AND email_verified_at IS NULL THEN 1 ELSE 0 END) as unverified_users,
-                    SUM(CASE WHEN role != 'admin' AND status = 'inactive' THEN 1 ELSE 0 END) as blocked_users
+                    SUM(CASE WHEN role != 'admin' AND status IN ('inactive', 'blocked') THEN 1 ELSE 0 END) as blocked_users
                 ")
                 ->first();
 
@@ -55,9 +56,38 @@ class AdminController extends Controller
             $pendingProducts = DB::table('products')->where('status', 'pending')->count();
             $newUsersToday = DB::table('users')
                 ->where('role', '!=', 'admin')
-                ->where('status', 'active')
-                ->where('created_at', '>=', now()->subDays(30))
+                ->whereDate('created_at', now())
                 ->count();
+
+            $sellerGrossSales = (float) DB::table('order_items as oi')
+                ->join('orders as o', 'o.id', '=', 'oi.order_id')
+                ->join('products as p', 'p.id', '=', 'oi.product_id')
+                ->join('shops as s', 's.id', '=', 'p.shop_id')
+                ->join('users as u', 'u.id', '=', 's.user_id')
+                ->where('u.role', 'seller')
+                ->whereIn('o.status', ['paid', 'shipped', 'completed'])
+                ->sum(DB::raw('oi.quantity * oi.price'));
+
+            $commissionSetting = CommissionSetting::query()->first();
+            $platformPercent = (float) ($commissionSetting?->platform_percent ?? 0);
+            if ($platformPercent <= 0 && (float) ($commissionSetting?->seller_percent ?? 0) > 0) {
+                $platformPercent = max(0, 100 - (float) $commissionSetting->seller_percent);
+            }
+
+            $platformProfit = round($sellerGrossSales * ($platformPercent / 100), 2);
+            $sellerNetProfit = round($sellerGrossSales - $platformProfit, 2);
+
+            $sellerApprovedWithdrawals = (float) DB::table('withdrawals as w')
+                ->join('users as u', 'u.id', '=', 'w.user_id')
+                ->where('u.role', 'seller')
+                ->where('w.status', 'approved')
+                ->sum('w.amount');
+
+            $sellerPendingWithdrawals = (float) DB::table('withdrawals as w')
+                ->join('users as u', 'u.id', '=', 'w.user_id')
+                ->where('u.role', 'seller')
+                ->where('w.status', 'pending')
+                ->sum('w.amount');
 
             return [
                 'users' => [
@@ -188,6 +218,50 @@ class AdminController extends Controller
                         "colorIcon" => "#008ECC",
                     ],
                 ],
+                'profits' => [
+                    [
+                        "title" => "Seller Gross Sales",
+                        "value" => $sellerGrossSales . "$",
+                        "icon" => "Wallet",
+                        "iconColor" => "#008ECC",
+                        "bgColor" => "bg-[#E6F6FF]",
+                    ],
+                    [
+                        "title" => "Platform Profit",
+                        "value" => $platformProfit . "$",
+                        "icon" => "DollarSign",
+                        "iconColor" => "#008ECC",
+                        "bgColor" => "bg-[#E6F6FF]",
+                    ],
+                    [
+                        "title" => "Seller Net Profit",
+                        "value" => $sellerNetProfit . "$",
+                        "icon" => "TrendingUp",
+                        "iconColor" => "#008ECC",
+                        "bgColor" => "bg-[#E6F6FF]",
+                    ],
+                    [
+                        "title" => "Pending Seller Withdrawals",
+                        "value" => $sellerPendingWithdrawals . "$",
+                        "icon" => "CreditCard",
+                        "iconColor" => "#008ECC",
+                        "bgColor" => "bg-[#E6F6FF]",
+                    ],
+                    [
+                        "title" => "Approved Seller Withdrawals",
+                        "value" => $sellerApprovedWithdrawals . "$",
+                        "icon" => "CheckCircle",
+                        "iconColor" => "#008ECC",
+                        "bgColor" => "bg-[#E6F6FF]",
+                    ],
+                    [
+                        "title" => "Platform Commission Rate",
+                        "value" => $platformPercent . "%",
+                        "icon" => "Percent",
+                        "iconColor" => "#008ECC",
+                        "bgColor" => "bg-[#E6F6FF]",
+                    ],
+                ],
             ];
         });
 
@@ -198,7 +272,7 @@ class AdminController extends Controller
         $AllUsers = User::where('role', "!=", 'admin')->count();
         $ActiveUsers = User::where('role', "!=", 'admin')->where('status', 'active')->count();
         $UnverifiedUsers = User::where('role', "!=", 'admin')->where('email_verified_at', null)->count();
-        $BlockedUsers = User::where('role', "!=", 'admin')->where('status', 'blocked')->count();
+        $BlockedUsers = User::where('role', "!=", 'admin')->whereIn('status', ['inactive', 'blocked'])->count();
 
         return response()->json([
           [
@@ -320,7 +394,7 @@ public function getAnnalyseWithdrawal()
    $orderToday = Order::whereDate('created_at', now())->count();
    $chiffreDaffaires=Order::where('status', 'completed')->sum('total_price');
    $productsPending=Product::where('status', 'pending')->count();
-   $newUserToday=User::where('role', "!=", 'admin')->where('status', 'active')->where("created_at", '>=', now()->subDays(30))->count();
+   $newUserToday=User::where('role', "!=", 'admin')->whereDate('created_at', now())->count();
 
    return response()->json([
        [

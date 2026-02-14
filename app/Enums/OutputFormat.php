@@ -94,7 +94,7 @@ enum OutputFormat: string
             'invoice', 'quote', 'receipt' => [
                 self::HTML, self::PDF, self::DOCX
             ],
-            'email_welcome', 'email_notification', 'email_campaign' => [
+            'email_welcome', 'email_notification', 'email_campaign', 'email_admin' => [
                 self::HTML, self::TEXT
             ],
             'sms_notification', 'sms_verification' => [

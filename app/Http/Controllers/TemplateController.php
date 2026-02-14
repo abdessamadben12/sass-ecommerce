@@ -19,7 +19,10 @@ class TemplateController extends Controller
      */
     public function index(Request $request)
     { 
-        $perPage=$request->input('per_page',0);
+        $perPage = (int) $request->input('per_page', 15);
+        if ($perPage <= 0) {
+            $perPage = 15;
+        }
         $query = Template::query();
 
         if($request->type !=="null" && $request->type !== null){
@@ -45,8 +48,8 @@ class TemplateController extends Controller
             "is_default"=>"boolean|nullable",
             "output_format"=>"string|nullable",
             "target_audience"=>"string|nullable",
-            "css-content"=>"string|nullable",
-            "js-content"=>"string|nullable",
+            "css_content"=>"string|nullable",
+            "js_content"=>"string|nullable",
             "subtype"=>"string|nullable"
 
         ]);
@@ -63,7 +66,7 @@ class TemplateController extends Controller
     {  
         return response()->json($template->load("creator"));
     }
-  public function update(Request $request){
+  public function update(Request $request, int $id){
     $validated = $request->validate([
             'name' => 'required|string|max:255',
             'type' => ['required', Rule::enum(TemplateType::class)],
@@ -75,16 +78,26 @@ class TemplateController extends Controller
             "is_default"=>"boolean|nullable",
             "output_format"=>"string|nullable",
             "target_audience"=>"string|nullable",
-            "css-content"=>"string|nullable",
-            "js-content"=>"string|nullable",
+            "css_content"=>"string|nullable",
+            "js_content"=>"string|nullable",
             "subtype"=>"string|nullable"
 
         ]);
-    $template = Template::findOrFail($request->id);
+    $template = Template::findOrFail($id);
     $template->update($validated);
     $template->save();
     return response()->json(["message"=>"Template updated",$template], 201);
 
+  }
+
+  public function destroy(int $id)
+  {
+      $template = Template::findOrFail($id);
+      $template->delete();
+
+      return response()->json([
+          "message" => "Template deleted"
+      ], 200);
   }
     /**
      * Prévisualiser un template
