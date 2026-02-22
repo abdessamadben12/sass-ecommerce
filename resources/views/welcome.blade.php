@@ -12,7 +12,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="/resources/css/app.css">
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-[#f8fafc] text-slate-900 antialiased">
 
@@ -61,14 +61,14 @@
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                         </a>
                     @elseif((auth()->user()->role ?? null) === 'seller')
-                        <a href="{{ route('seller.onboarding.index') }}" class="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition-all text-xs font-bold">Espace vendeur</a>
+                        <a href="#" class="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition-all text-xs font-bold">Espace vendeur</a>
                     @endif
                     <form method="POST" action="{{ route('logout') }}"> @csrf
                         <button class="bg-slate-900 text-white px-5 py-2 rounded-xl hover:bg-slate-800 transition-all text-xs font-bold">Déconnexion</button>
                     </form>
                 @else
                     <button id="open-auth-modal" type="button" class="text-slate-600 hover:text-blue-600 transition-colors">Connexion</button>
-                    <a href="{{ route('login') }}" class="bg-blue-600 text-white px-5 py-2.5 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all">Vendre</a>
+                    <a href="#" class="bg-blue-600 text-white px-5 py-2.5 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all">Vendre</a>
                 @endauth
             </div>
         </div>
@@ -257,45 +257,44 @@
 </div>
 
 @guest
-<div id="auth-modal-backdrop" class="auth-modal-backdrop" data-open-on-load="{{ $errors->any() ? '1' : '0' }}">
-    <div class="auth-modal">
-        <div class="auth-modal-head">
-            <h3 class="auth-modal-title">Connexion</h3>
-            <button id="close-auth-modal" type="button" class="auth-modal-close">&times;</button>
-        </div>
-
-        <div class="auth-modal-body">
-            <form method="POST" action="{{ route('login.submit') }}">
-                @csrf
-
-                <label class="auth-field-label">Adresse email</label>
-                <input class="auth-input" type="email" name="email" value="{{ old('email') }}" required />
-
-                <label class="auth-field-label">Mot de passe</label>
-                <input class="auth-input" type="password" name="password" required />
-
-                <div class="auth-row">
-                    <label style="display:flex;align-items:center;gap:8px;">
-                        <input type="checkbox" name="remember" value="1" />
-                        Rester connecte
-                    </label>
-                    <a href="{{ route('login') }}" class="underline">Mot de passe oublie ?</a>
-                </div>
-
-                @if($errors->any())
-                    <p class="auth-error">{{ $errors->first() }}</p>
-                @endif
-
-                <button type="submit" class="auth-primary-btn">Se connecter</button>
-            </form>
-
-            <div class="auth-separator">OU</div>
-            <button type="button" class="auth-social">Continuer avec Google</button>
-            <button type="button" class="auth-social">Continuer avec Facebook</button>
-        </div>
-    </div>
-</div>
+<x-login />
 @endguest
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var openBtn = document.getElementById('open-auth-modal');
+    var closeBtn = document.getElementById('close-auth-modal');
+    var backdrop = document.getElementById('auth-modal-backdrop');
+
+    if (!openBtn || !backdrop) return;
+
+    function openModal() {
+        backdrop.style.display = 'flex';
+    }
+
+    function closeModal() {
+        backdrop.style.display = 'none';
+    }
+
+    openBtn.addEventListener('click', openModal);
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeModal);
+    }
+
+    backdrop.addEventListener('click', function (e) {
+        if (e.target === backdrop) closeModal();
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeModal();
+    });
+
+    if (backdrop.dataset.openOnLoad === '1') {
+        openModal();
+    }
+});
+</script>
 
 <!-- Modal & Popups (Unchanged Logic, Improved UI) -->
 <div id="policy-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">

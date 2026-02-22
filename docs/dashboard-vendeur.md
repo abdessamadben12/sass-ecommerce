@@ -231,3 +231,37 @@ F. Profil vendeur
 •	Gumroad > tableau de bord créateur
 •	Payhip > panneau vendeur
 
+
+Implementation professionnelle (Laravel)
+
+Objectif livre:
+- Tableau de bord vendeur complet avec:
+  - Apercu ventes/revenus/statistiques
+  - Notifications commandes/avis/requetes
+  - Suggestions basees sur les tendances du marche
+
+Architecture retenue:
+- routes/web.php
+  - Route dediee: seller.dashboard.index
+- app/Http/Controllers/Seller/SellerDashboardController.php
+  - Orchestration HTTP uniquement
+  - Validation d'acces vendeur
+  - Delegation au service metier
+- app/Services/Seller/SellerDashboardService.php
+  - Aggregation metier:
+    - KPIs (revenus, ventes, commandes, conversion, panier moyen)
+    - Statistiques (revenus 7 jours, top produits, notes)
+    - Notifications consolidees (commandes, avis, tickets, notifications systeme)
+    - Suggestions tendances (opportunites categories, conversion, qualite produit)
+- resources/views/seller/dashboard/index.blade.php
+  - Presentation UI responsive
+  - Cartes KPI, graphe 7 jours, top produits
+  - Bloc notifications + bloc recommandations data-driven
+- resources/views/seller/layouts/app.blade.php
+  - Navigation seller (Dashboard, Onboarding, Marketplace, Logout)
+
+Principes d'organisation:
+- Separation stricte controller/service/view.
+- Requetes agregees en service pour faciliter tests et evolution.
+- Donnees renvoyees au format structure (overview/stats/notifications/trendSuggestions).
+- UI isolee dans la vue dashboard pour eviter le couplage avec onboarding.
