@@ -18,7 +18,10 @@ use Throwable;
 
 class AuthController extends Controller
 {
-  
+    public function showLoginForm(): View
+    {
+        return view('seller.auth.login');
+    }
 
     public function login(Request $request): RedirectResponse
     {
@@ -71,17 +74,12 @@ class AuthController extends Controller
         $request->session()->regenerate();
         $user = Auth::user();
 
-        if (($user->role ?? null) === 'seller') {
-            return redirect()->intended(route('seller.onboarding.index'));
-        }
-
-        return redirect()->intended(route('home'));
+        return $this->redirectAfterLogin($user);
     }
 
     public function redirectToGoogle(): RedirectResponse
     {
-        return Socialite::driver('google')
-            ->redirect();
+        return Socialite::driver('google')->redirect();
     }
 
     public function handleGoogleCallback(Request $request): RedirectResponse
@@ -90,7 +88,7 @@ class AuthController extends Controller
             $googleUser = Socialite::driver('google')->user();
         } catch (Throwable $exception) {
             return redirect()
-                ->route('login')
+                ->route('login.seller')
                 ->withErrors(['email' => 'Connexion Google impossible. Veuillez reessayer.']);
         }
 
@@ -99,7 +97,7 @@ class AuthController extends Controller
 
         if ($email === '') {
             return redirect()
-                ->route('login')
+                ->route('login.seller')
                 ->withErrors(['email' => 'Votre compte Google ne fournit pas d\'adresse email.']);
         }
 
@@ -136,11 +134,7 @@ class AuthController extends Controller
         Auth::login($user, true);
         $request->session()->regenerate();
 
-        if (($user->role ?? null) === 'seller') {
-            return redirect()->intended(route('seller.onboarding.index'));
-        }
-
-        return redirect()->intended(route('home'));
+        return $this->redirectAfterLogin($user);
     }
 
     private function verifyTwoFactor(Request $request): RedirectResponse
@@ -186,8 +180,13 @@ class AuthController extends Controller
         Auth::loginUsingId($user->id, $remember);
         $request->session()->regenerate();
 
+        return $this->redirectAfterLogin($user);
+    }
+
+    private function redirectAfterLogin($user): RedirectResponse
+    {
         if (($user->role ?? null) === 'seller') {
-            return redirect()->intended(route('seller.index'));
+            return redirect()->intended(route('seller.dashboard'));
         }
 
         return redirect()->intended(route('home'));
