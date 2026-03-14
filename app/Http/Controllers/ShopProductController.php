@@ -25,7 +25,7 @@ class ShopProductController extends Controller
         $dateTo = $request->input('date_to');
         $query = Shop::query();
         if(!empty($nameShop) && $nameShop !== 'null' && $nameShop !== 'undefined'){
-          $query->where('name',"like","%$nameShop%");
+          $query->where('shop_name',"like","%$nameShop%");
         }
         if(!empty($status) && $status !== 'null' && $status !== 'undefined'){
             $query->where('status', $status);
@@ -86,7 +86,7 @@ class ShopProductController extends Controller
         }
         if(!empty($nameShop) && $nameShop !== 'null' && $nameShop !=="undefined"){
            $query->whereHas('shop',function($q) use($nameShop){
-            $q->where('name',"like","%$nameShop%");
+            $q->where('shop_name',"like","%$nameShop%");
           });
         }
         if(!empty($category) && $category !== 'null' && $category !=="undefined"){
@@ -95,7 +95,7 @@ class ShopProductController extends Controller
         });
         }
         if(!empty($status) && $status !== 'null' && $status !== 'undefined'){
-            $query->where('status',"like", "%$status%");
+            $query->where('status', $status);
         }
             $result = $query->with("shop.user")->orderBy("created_at", "desc")->paginate($perPage);
             // $products=new ProductResource($result);
@@ -223,7 +223,7 @@ class ShopProductController extends Controller
         $dateTo = $request->input('date_to');
         $query = Shop::query();
         if(!empty($nameShop) && $nameShop !== 'null' && $nameShop !== 'undefined'){
-          $query->where('name',"like","%$nameShop%");
+          $query->where('shop_name',"like","%$nameShop%");
         }
         if(!empty($status) && $status !== 'null' && $status !== 'undefined'){
             $query->where('status', $status);

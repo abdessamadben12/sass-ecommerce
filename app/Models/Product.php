@@ -79,9 +79,19 @@ class Product extends Model
         return $this->belongsTo(Categorie::class);
     }
 
-    public function file_format(): BelongsTo
+    /**
+     * File format is stored on ProductSetting (product_setting_id → product_settings.format_id → product_formats.id).
+     * Load via $product->load('productSetting.format') then call $product->file_format to get it.
+     */
+    public function getFileFormatAttribute(): ?ProductFormat
     {
-        return $this->belongsTo(ProductFormat::class,"product_setting_id","id");
+        if ($this->relationLoaded('productSetting') && $this->productSetting) {
+            if (!$this->productSetting->relationLoaded('format')) {
+                $this->productSetting->load('format');
+            }
+            return $this->productSetting->format;
+        }
+        return null;
     }
 
     public function productSetting(): BelongsTo

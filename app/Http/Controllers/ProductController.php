@@ -60,12 +60,18 @@ class ProductController extends Controller
 
         $products = $this->productService->getFilteredProducts($filters);
         $stats = $this->productService->getProductsStats();
-        foreach($products as $product){
+        
+        try{
+            foreach($products as $product){
             if(Storage::disk("spaces_2")->exists($product->thumbnail_path)){
                 $product->thumbnail_path=Storage::disk("spaces_2")->url($product->thumbnail_path);
             }
         }
-
+        }
+        catch(\Exception $e){
+            // ignore storage errors
+            $product->thumbnail_path=null;
+        }
         return response()->json(["products"=>$products,"stats"=>$stats]);
     }
 
@@ -179,27 +185,56 @@ class ProductController extends Controller
         // }
 
         try {
-            $filePath = $this->fileUploadService->uploadMainFile($request->file('file'), $product);
-            
-            $product->update([
+            $file     = $request->file('file');
+            $filePath = $this->fileUploadService->uploadMainFile($file, $product);
+
+            $extension = strtolower($file->getClientOriginalExtension());
+            $mimeType  = $file->getMimeType();
+
+            // Detect the ProductFormat matching the uploaded file
+            $format = \App\Models\ProductFormat::where('is_active', true)
+                ->where(function ($q) use ($extension, $mimeType) {
+                    $q->where('extension', 'like', "%{$extension}%")
+                      ->orWhere('mime_type',  'like', "%{$mimeType}%");
+                })
+                ->first();
+
+            $updateFields = [
                 'main_file_path' => $filePath,
-                'main_file_size' => $request->file('file')->getSize(),
-                'file_hash' => hash_file('sha256', $request->file('file')->getRealPath())
-            ]);
+                'main_file_size' => $file->getSize(),
+                'file_hash'      => hash_file('sha256', $file->getRealPath()),
+            ];
+
+            // If we found a matching format, find the ProductSetting for this category + format and update
+            if ($format) {
+                $matchingSetting = \App\Models\ProductSetting::where('category_id', $product->category_id)
+                    ->where('format_id', $format->id)
+                    ->first();
+                if ($matchingSetting) {
+                    $updateFields['product_setting_id'] = $matchingSetting->id;
+                }
+            }
+
+            $product->update($updateFields);
+
             $this->logAdminAction($product, 'upload_main_file', [
                 'file_path' => $filePath,
-                'file_size' => $request->file('file')->getSize(),
+                'file_size' => $file->getSize(),
+                'format'    => $format?->name ?? $extension,
             ]);
 
             return response()->json([
-                'message' => 'File uploaded successfully',
-                'file_path' => $filePath
+                'message'    => 'File uploaded successfully',
+                'file_path'  => $filePath,
+                'file_size'  => $file->getSize(),
+                'format'     => $format?->only(['id', 'name', 'extension', 'mime_type']),
+                'uploaded_at' => now()->toISOString(),
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'File upload failed',
-                'error' => $e->getMessage()
+                'error'   => $e->getMessage()
             ], 422);
         }
     }

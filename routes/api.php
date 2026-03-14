@@ -52,6 +52,9 @@ Route::prefix('auth')->group(function () {
     Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 });
+
+// Public settings endpoint (no auth required — used for logo, favicon, app name)
+Route::get('/settings/public', [SettingsController::class, 'getPublic']);
 Route::middleware(['auth:sanctum','admin','log.admin.activity'])->group(function () {
 Route::get('/admin/userAnnalyse', [AdminController::class, 'getAnnalyseUser'])->name('admin.userAnnalyse');
 Route::get('/admin/dashboard/overview', [AdminController::class, 'dashboardOverview'])->name('admin.dashboard.overview');
@@ -167,7 +170,7 @@ Route::get("/admin/settings/seo", [SettingsController::class, 'getSeo']);
 Route::put("/admin/settings/seo", [SettingsController::class, 'updateSeo']);
 // support tickets
 Route::get("/admin/tickets", [TicketsController::class, 'index'])->name('admin.tickets.index');
-Route::get("/admin/ticket-detaill/{id}",[TicketsController::class,"getTicketDetail"])->name("admin.tickets.index");
+Route::get("/admin/ticket-detaill/{id}",[TicketsController::class,"getTicketDetail"])->name("admin.tickets.detail");
 Route::post("/admin/create-ticket",[TicketsController::class,"createTicket"]);
 Route::put("/admin/update-ticket/{id}",[TicketsController::class,"updateTicket"])->name("admin.tickets.update");
 Route::delete("/admin/delete-ticket/{id}",[TicketsController::class,"deleteTicket"])->name("admin.tickets.delete");

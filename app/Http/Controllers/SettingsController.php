@@ -38,6 +38,14 @@ class SettingsController extends Controller
         return $value ? '********' : null;
     }
 
+    public function getPublic()
+    {
+        $keys  = ['app_name', 'logo_url', 'favicon_url', 'default_currency', 'default_language', 'default_timezone'];
+        $items = Setting::where('group', 'general')->whereIn('key', $keys)->pluck('value', 'key');
+        $items = $this->normalizeAssetUrls(collect($items));
+        return response()->json($items, 200);
+    }
+
     public function getGeneral()
     {
         $items = Setting::where('group', 'general')->get()->pluck('value', 'key');
@@ -138,8 +146,9 @@ class SettingsController extends Controller
             'logo' => 'required|image|max:2048',
         ]);
 
-        $path = $data['logo']->store('settings', 'public');
-        $url = Storage::disk('public')->url($path);
+        $disk = config('filesystems.default', 'public');
+        $path = $data['logo']->store('settings', $disk);
+        $url  = Storage::disk($disk)->url($path);
 
         Setting::updateOrCreate(
             ['group' => 'general', 'key' => 'logo_url'],
@@ -155,8 +164,9 @@ class SettingsController extends Controller
             'favicon' => 'required|image|max:512',
         ]);
 
-        $path = $data['favicon']->store('settings', 'public');
-        $url = Storage::disk('public')->url($path);
+        $disk = config('filesystems.default', 'public');
+        $path = $data['favicon']->store('settings', $disk);
+        $url  = Storage::disk($disk)->url($path);
 
         Setting::updateOrCreate(
             ['group' => 'general', 'key' => 'favicon_url'],

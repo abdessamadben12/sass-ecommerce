@@ -12,11 +12,34 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // \App\Models\User::factory(10)->create();
+        // Disable FK checks for clean bulk inserts
+        \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
-        // \App\Models\User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
+        $this->call([
+            // 1. Reference data (no FK dependencies)
+            CategorySeeder::class,
+            LicenseSeeder::class,
+            ProductFormatSeeder::class,
+
+            // 2. Users
+            UserSeeder::class,
+
+            // 3. Shops, wallets, product settings, products
+            ShopAndProductSeeder::class,
+
+            // 4. Orders, order items, profits, transactions
+            OrderSeeder::class,
+
+            // 5. Reviews
+            ReviewSeeder::class,
+
+            // 6. Support tickets & replies
+            TicketSeeder::class,
+
+            // 7. App settings (existing seeder)
+            StorageSettingsSeeder::class,
+        ]);
+
+        \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=1;');
     }
 }

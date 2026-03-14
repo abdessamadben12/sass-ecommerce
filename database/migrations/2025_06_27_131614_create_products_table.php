@@ -32,7 +32,7 @@ $table->decimal('base_price', 10, 2);
 $table->decimal('minimum_price', 10, 2)->default(0.00);
 
 // Fichiers
-$table->string('main_file_path', 500);
+$table->string('main_file_path', 500)->nullable();
 $table->unsignedBigInteger('main_file_size')->nullable();
 $table->string('file_hash', 64)->nullable();
 
@@ -41,10 +41,12 @@ $table->json('preview_images')->nullable();
 $table->string('thumbnail_path')->nullable();
 
 // Status modération
-$table->enum('status', ['draft', 'pending', 'approved', 'rejected',"supended"])->default('draft');
+$table->enum('status', ['draft', 'pending', 'approved', 'rejected', 'suspended'])->default('draft');
+$table->text('reason')->nullable();
 // Timestamps
 $table->timestamp('published_at')->nullable();
 $table->timestamps();
+$table->softDeletes();
 
         });
     }

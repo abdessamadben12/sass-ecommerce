@@ -14,9 +14,11 @@ return new class extends Migration
         Schema::create('profits', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('shop_id')->nullable()->constrained('shops')->onDelete('set null');
             $table->foreignId('order_id')->constrained()->onDelete('cascade');
             $table->decimal('total_amount', 10, 2);
             $table->decimal('profit_platform', 10, 2);
+            $table->boolean('is_paid')->default(false);
             $table->timestamps();
         });
     }

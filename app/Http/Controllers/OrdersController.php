@@ -35,7 +35,7 @@ class OrdersController extends Controller
         if($NameShopOrUserName!==null){
             $query->where(function ($q) use ($NameShopOrUserName) {
                 $q->whereHas("orderItems.product.shop", function ($q2) use ($NameShopOrUserName) {
-                    $q2->where('name', 'like', '%' . $NameShopOrUserName . '%');
+                    $q2->where('shop_name', 'like', '%' . $NameShopOrUserName . '%');
                 })->orWhereHas('user', function ($q2) use ($NameShopOrUserName) {
                     $q2->where('name', 'like', '%' . $NameShopOrUserName . '%');
                 });
@@ -63,20 +63,25 @@ class OrdersController extends Controller
     public function getOrderDetail(Request $request)
     {
         $id = $request->id;
-        $order = Order::find($id);
+        $order = Order::with(['user', 'orderItems.product.file_format'])->find($id);
         if (!$order) {
             return response()->json(['message' => 'Order not found'], 404);
         }
         return response()->json([
             "id" => $order->id,
-            "custemer" => $order->user->name,
-            "custemer_email" => $order->user->email,
+            "customer" => $order->user?->name,
+            "customer_email" => $order->user?->email,
             "total" => $order->total_price,
-
-            "items"=> $order->orderItems->pluck('product.file_format')->filter()->values(),
+            "items" => $order->orderItems->map(function ($item) {
+                return [
+                    'product_id' => $item->product_id,
+                    'title'      => $item->product?->title,
+                    'price'      => $item->price,
+                    'format'     => $item->product?->file_format?->name,
+                ];
+            })->values(),
             "status" => $order->status,
             "date" => $order->created_at,
-            
         ], 200);
     }
     

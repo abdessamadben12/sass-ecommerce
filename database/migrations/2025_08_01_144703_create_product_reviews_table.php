@@ -37,7 +37,7 @@ return new class extends Migration
             
             // Purchase verification
             $table->boolean('is_verified_purchase')->default(false);
-            $table->foreignId('purchase_id')->nullable()->constrained('purchases')->onDelete('set null');
+            $table->unsignedBigInteger('purchase_id')->nullable(); // no FK: purchases table does not exist
             
             // Review metadata
             $table->json('metadata')->nullable(); // Extra data like purchase date, version, etc.

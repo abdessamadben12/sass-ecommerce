@@ -14,11 +14,15 @@ return new class extends Migration
          Schema::disableForeignKeyConstraints();
         Schema::create('reviews', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('product_review_id')->nullable();
+            $table->unsignedBigInteger('reported_by')->nullable();
             $table->boolean('is_reported')->default(false);
             $table->text('report_reason')->nullable();
             $table->enum('moderation_status', ['pending', 'reviewed', 'removed'])->default('pending');
             $table->timestamps();
-            
+
+            $table->foreign('product_review_id')->references('id')->on('product_reviews')->onDelete('cascade');
+            $table->foreign('reported_by')->references('id')->on('users')->onDelete('set null');
         });
     }
 

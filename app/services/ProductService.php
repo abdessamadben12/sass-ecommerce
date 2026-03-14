@@ -42,8 +42,9 @@ class ProductService
         $query->where('category_id', $filters['category_id']);
     }
 
-    if (!empty($filters['status'] && $filters['status'] !== "undefined") && $filters['status'] !== "all") {
-        $query->where('status', $filters['status']);}
+    if (!empty($filters['status']) && $filters['status'] !== "undefined" && $filters['status'] !== "all") {
+        $query->where('status', $filters['status']);
+    }
     // } else {
     //     if (!auth()->check() || !auth()->user()->hasRole(['admin'])) {
     //         $query->published(); // Assure-toi que tu as un scopePublished() dans Product
@@ -99,39 +100,43 @@ class ProductService
     return $query->paginate($perPage);
 }
 
-public function getDetailsProduct($product)
+public function getDetailsProduct(Product $product): Product
 {
-    $product = $product->with(['shop.user', 'category', 'license', 'reviews', 'file_format'])
-        ->withCount('downloads')
-        ->withCount('reviews')
-        ->withCount('views')
-        ->withSum('orders',"total_price")
-        ->withCount('orders')
-        ->withAvg('orders',"total_price")
-        ->first();
+    // Use load() on the specific instance — avoids the bug of ->with()->first() returning wrong product
+    // Load productSetting.format (NOT file_format — that relationship was broken and replaced with an accessor)
+    $product->load(['shop.user', 'category', 'license', 'reviews.user', 'productSetting.format']);
+    $product->loadCount(['downloads', 'reviews', 'views', 'orders']);
+    $product->loadSum('orders', 'total_price');
+    $product->loadAvg('reviews', 'rating');
 
-    if (Storage::disk("spaces_2")->exists($product->thumbnail_path)) {
-        $product->thumbnail_path = Storage::disk("spaces_2")->url($product->thumbnail_path);
+    $toUrl = function (?string $path): ?string {
+        if (!$path || str_starts_with($path, 'http')) return $path;
+        try {
+            return Storage::disk('spaces_2')->exists($path)
+                ? Storage::disk('spaces_2')->url($path)
+                : null;
+        } catch (\Exception $e) {
+            return null;
+        }
+    };
+
+    $product->thumbnail_path = $toUrl($product->thumbnail_path) ?? $product->thumbnail_path;
+
+    $product->preview_images = collect($product->preview_images ?? [])
+        ->filter(fn($img) => is_string($img) && $img !== '')
+        ->map(fn($img) => str_starts_with($img, 'http') ? $img : $toUrl($img))
+        ->filter()
+        ->values()
+        ->toArray();
+
+    if (!empty($product->shop?->user?->avatar)) {
+        $product->shop->user->avatar = $toUrl($product->shop->user->avatar) ?? $product->shop->user->avatar;
     }
 
-    $updatedImages = [];
-    foreach ($product->preview_images ?? [] as $image) {
-        if (is_string($image) && (str_starts_with($image, 'http://') || str_starts_with($image, 'https://'))) {
-            $updatedImages[] = $image;
-            continue;
-        }
-        if (Storage::disk("spaces_2")->exists($image)) {
-            $updatedImages[] = Storage::disk("spaces_2")->url($image);
-        }
+    if (!empty($product->shop?->logo)) {
+        $product->shop->logo = $toUrl($product->shop->logo) ?? $product->shop->logo;
     }
-    if (!empty($product->shop->user->avatar)) {
-        $product->shop->user->avatar = Storage::disk("spaces_2")->url($product->shop->user->avatar);
-    }
-    $product->preview_images = $updatedImages;
-    if (!empty($product->shop->logo)) {
-        $product->shop->logo = Storage::disk("spaces_2")->url($product->shop->logo);
-    }
-  
+
     return $product;
 }
 
@@ -486,28 +491,75 @@ public function getDetailsProduct($product)
     }
 
     /**
-     * Get product statistics
+     * Get per-product analytics (views, sales, revenue over last 30 days)
      */
     public function getProductStats(Product $product): array
     {
-        $productsCount = Product::count();
+        $days  = 30;
+        $start = Carbon::now()->subDays($days - 1)->startOfDay();
 
-    $productsCountPending = Product::where('status', 'pending')->count();
+        // Pre-fill every day with zeros
+        $dateRange = [];
+        for ($i = 0; $i < $days; $i++) {
+            $d = Carbon::now()->subDays($days - 1 - $i)->format('Y-m-d');
+            $dateRange[$d] = ['date' => $d, 'views' => 0, 'sales' => 0, 'revenue' => 0.0];
+        }
 
-    $revenue = Order_item::query()
-        ->whereHas('order', function ($query) {
-            $query->where('status', 'completed');
-        })
-        ->sum('price');
+        // Daily views
+        try {
+            ProductView::where('product_id', $product->id)
+                ->where('created_at', '>=', $start)
+                ->selectRaw('DATE(created_at) as date, COUNT(*) as cnt')
+                ->groupBy('date')
+                ->get()
+                ->each(function ($row) use (&$dateRange) {
+                    if (isset($dateRange[$row->date])) {
+                        $dateRange[$row->date]['views'] = (int) $row->cnt;
+                    }
+                });
+        } catch (\Exception $e) {}
 
-    $downloads = ProductDownload::count();
+        // Daily sales & revenue
+        try {
+            Order_item::where('product_id', $product->id)
+                ->whereHas('order', fn($q) => $q->where('status', 'completed'))
+                ->where('created_at', '>=', $start)
+                ->selectRaw('DATE(created_at) as date, COUNT(*) as cnt, SUM(price) as total')
+                ->groupBy('date')
+                ->get()
+                ->each(function ($row) use (&$dateRange) {
+                    if (isset($dateRange[$row->date])) {
+                        $dateRange[$row->date]['sales']   = (int)   $row->cnt;
+                        $dateRange[$row->date]['revenue'] = (float) $row->total;
+                    }
+                });
+        } catch (\Exception $e) {}
 
-    return [
-        'products_count'          => $productsCount,
-        'products_count_pending'  => $productsCountPending,
-        'revenue'                 => (float) $revenue,
-        'downloads'               => $downloads,
-    ];
+        // Totals
+        $totalRevenue = (float) Order_item::where('product_id', $product->id)
+            ->whereHas('order', fn($q) => $q->where('status', 'completed'))
+            ->sum('price');
+
+        $totalSales = (int) Order_item::where('product_id', $product->id)
+            ->whereHas('order', fn($q) => $q->where('status', 'completed'))
+            ->count();
+
+        $totalViews     = (int)   ProductView::where('product_id', $product->id)->count();
+        $totalDownloads = (int)   ProductDownload::where('product_id', $product->id)->count();
+        $avgRating      = (float) ($product->reviews()->avg('rating') ?? 0);
+        $reviewsCount   = (int)   $product->reviews()->count();
+
+        return [
+            'daily_views'     => array_values($dateRange),
+            'countries'       => [],
+            'total_revenue'   => $totalRevenue,
+            'total_sales'     => $totalSales,
+            'total_views'     => $totalViews,
+            'total_downloads' => $totalDownloads,
+            'average_rating'  => round($avgRating, 1),
+            'reviews_count'   => $reviewsCount,
+            'conversion_rate' => $totalViews > 0 ? round($totalSales / $totalViews * 100, 2) : 0.0,
+        ];
     }
     public function getProductsStats(){
         $products_Count = Product::count();
