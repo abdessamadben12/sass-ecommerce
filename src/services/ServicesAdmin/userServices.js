@@ -3,16 +3,16 @@ import { axiosConfig } from "../ConfigueAxios";
 
 export const getActiveUser = async (currentPage,nbrUserPerPage,role,name,setError) => await axiosConfig.
 get(`/admin/users/user-active?page=${currentPage}&per_page=${nbrUserPerPage}&role=${role}&name=${name}`)
-.then(res => res.data).catch(err => setError(err.message));
+.then(res => res.data).catch(err => setError(err.response?.data?.message || err.message));
 
 export const getBannedUser = async (currentPage,nbrUserPerPage,role,name,setError) => await axiosConfig.get(`/admin/users/user-banned?page=${currentPage}&per_page=${nbrUserPerPage}&role=${role}&name=${name}`).then(res => res.data)
-.catch(err => setError(err.message));
+.catch(err => setError(err.response?.data?.message || err.message));
 
 export const getUnverifiedUsers = async (currentPage,nbrUserPerPage,role,name,setError) => await axiosConfig.get(`/admin/users/user-unverified?page=${currentPage}&per_page=${nbrUserPerPage}&role=${role}&name=${name}`).then(res => res.data)
-.catch(err => setError(err.message));
+.catch(err => setError(err.response?.data?.message || err.message));
 
 export const getUserById = async (id,setError) => await axiosConfig.get(`/admin/users/${id}`).then(res => res.data)
-.catch(err =>setError(err.message));
+.catch(err => setError(err.response?.data?.message || err.message));
 
 export const updateUser = async (data,id,setSucess,setError) => await axiosConfig.put(`/admin/users/${id}`,data).then(res =>setSucess({message:res.data.message,show:true}))
     .catch(err =>{
@@ -53,4 +53,4 @@ export const subBalanceUser=async(data,setSucess,setError)=>{
 }
 
 export const deleteUsers = async (id,setError,setSucess) => await axiosConfig.delete(`/admin/users/${id}`).then(res => setSucess(res.data))
-.catch(err => setError(err.message));
+.catch(err => setError(err.response?.data?.message || err.message));

@@ -1,7 +1,9 @@
 import axios from "axios"
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
+
 export const axiosBase = axios.create({
-  baseURL: "http://localhost:8000",
+  baseURL: API_BASE_URL,
   withCredentials: true,
   headers: {
     Accept: "application/json",
@@ -11,7 +13,7 @@ export const axiosBase = axios.create({
 })
 
 export const axiosConfig = axios.create({
-  baseURL: "http://localhost:8000/api",
+  baseURL: `${API_BASE_URL}/api`,
   withCredentials: true,
   headers: {
     Accept: "application/json",

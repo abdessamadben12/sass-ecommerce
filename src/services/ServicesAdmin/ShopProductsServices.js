@@ -7,7 +7,7 @@ export const getShops = async (params, setError) =>
 export const getStatistiqueShop=async(id,setError)=>await axiosConfig.get(`/admin/shops/statistique/${id}`)
 .then(res=>res.data).catch(err=>setError(err.message))
 
-export const getShop=async(id,setError)=>await axiosConfig.get(`admin/shops/${id}`)
+export const getShop=async(id,setError)=>await axiosConfig.get(`/admin/shops/${id}`)
 .then(res=>res.data).catch(err=>setError(err.message))
 
 export const getShopStats = async (id, params, setError) =>
@@ -78,19 +78,25 @@ export const bulkUpdateProductStatus = async (productIds, status, reason) =>
     reason,
   }).then(res => res.data);
 
-export const uploadProductMainFile = async (id, file) => {
+export const uploadProductMainFile = async (id, file, onProgress) => {
   const formData = new FormData();
   formData.append('file', file);
   return axiosConfig.post(`/admin/products/${id}/upload-main-file`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
+    onUploadProgress: (e) => {
+      if (onProgress && e.total) onProgress(Math.round((e.loaded * 100) / e.total));
+    },
   }).then(res => res.data);
 };
 
-export const uploadProductPreviewImages = async (id, files) => {
+export const uploadProductPreviewImages = async (id, files, onProgress) => {
   const formData = new FormData();
   Array.from(files).forEach((file) => formData.append('images[]', file));
   return axiosConfig.post(`/admin/products/${id}/upload-preview-images`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
+    onUploadProgress: (e) => {
+      if (onProgress && e.total) onProgress(Math.round((e.loaded * 100) / e.total));
+    },
   }).then(res => res.data);
 };
 

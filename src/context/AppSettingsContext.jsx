@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { getGeneralSettings } from "../services/ServicesAdmin/SettingsService";
+import { axiosConfig } from "../services/ConfigueAxios";
 
 const AppSettingsContext = createContext({
   appName: "",
@@ -20,7 +21,9 @@ export function AppSettingsProvider({ children }) {
 
   const load = async () => {
       try {
-        const general = await getGeneralSettings();
+        // Use public endpoint (no auth required) so logo/favicon load for all users
+        const res = await axiosConfig.get("/settings/public");
+        const general = res.data;
         const appName = general?.app_name || "";
         const logoUrl = general?.logo_url || "";
         const faviconUrl = general?.favicon_url || "";

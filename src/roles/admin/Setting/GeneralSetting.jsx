@@ -454,9 +454,9 @@ export default function GeneralSetting() {
 
             {tab === "notifications" && (
               <Section title="Notifications & Emails" icon={<Mail className="text-[#008ECC]" />}>
-                <BooleanField label="Alertes activ?es" value={notifications.alerts_enabled} onChange={(v) => setNotifications({ ...notifications, alerts_enabled: v })} />
+                <BooleanField label="Alertes activées" value={notifications.alerts_enabled} onChange={(v) => setNotifications({ ...notifications, alerts_enabled: v })} />
                 <Field label="Email des alertes" value={notifications.alerts_email} onChange={(v) => setNotifications({ ...notifications, alerts_email: v })} />
-                <BooleanField label="Emails syst?me" value={notifications.system_emails_enabled} onChange={(v) => setNotifications({ ...notifications, system_emails_enabled: v })} />
+                <BooleanField label="Emails système" value={notifications.system_emails_enabled} onChange={(v) => setNotifications({ ...notifications, system_emails_enabled: v })} />
                 <SaveButton onClick={saveNotifications} />
               </Section>
             )}

@@ -69,7 +69,7 @@ export default function DetaillUser() {
   async function handleBalanceAdd(param) {
     const dataForm = { ...param, id: data.user.id };
     const response = await addBalnaceUser(dataForm, setSucess, setError);
-    navigate("/admin/detaill-user/login/" + data.user?.id);
+    navigate("/admin/detaill-user/" + data.user?.id);
     return response;
   }
   async function handleBalanceSub(param) {
